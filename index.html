@@ -883,7 +883,7 @@
             const delayCounts = sups.map(s => currentProcessedData.filter(d => d.Supervisor === s && !String(d.DailyActivityStatus).includes('Operating')).length);
             const activePcts = sups.map((s, i) => totalCounts[i] > 0 ? parseFloat(((activeCounts[i] / totalCounts[i]) * 100).toFixed(1)) : 0);
 
-            const colors = ['#0284c7', '#d97706', '#7c3aed', '#059669', '#dc2626'];
+            const colors = ['#047857', '#1e293b', '#1e3a8a', '#0f766e', '#334155'];
 
             chartPieInstance = new Chart(canvas, {
                 type: 'doughnut',
@@ -961,7 +961,7 @@
                     labels: ['Operating Active (' + act + ')', 'Operational Delay / Idle (' + del + ')'],
                     datasets: [{
                         data: [act, del],
-                        backgroundColor: ['#0284c7', '#dc2626'],
+                        backgroundColor: ['#047857', '#1e3a8a'],
                         hoverOffset: 14,
                         borderWidth: 3,
                         borderColor: '#ffffff',
