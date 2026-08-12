@@ -883,7 +883,7 @@
             const delayCounts = sups.map(s => currentProcessedData.filter(d => d.Supervisor === s && !String(d.DailyActivityStatus).includes('Operating')).length);
             const activePcts = sups.map((s, i) => totalCounts[i] > 0 ? parseFloat(((activeCounts[i] / totalCounts[i]) * 100).toFixed(1)) : 0);
 
-            const colors = ['#059669', '#2563eb', '#d97706', '#7c3aed', '#0284c7'];
+            const colors = ['#6366f1', '#06b6d4', '#a855f7', '#3b82f6', '#f43f5e'];
 
             chartPieInstance = new Chart(canvas, {
                 type: 'doughnut',
@@ -893,9 +893,11 @@
                         label: 'Active Utilization (%)',
                         data: activePcts,
                         backgroundColor: colors.slice(0, labels.length),
-                        hoverOffset: 16,
-                        borderWidth: 3,
-                        borderColor: '#ffffff'
+                        hoverOffset: 20,
+                        borderWidth: 4,
+                        borderColor: '#ffffff',
+                        hoverBorderColor: '#0f172a',
+                        hoverBorderWidth: 4
                     }]
                 },
                 options: {
@@ -959,10 +961,12 @@
                     labels: ['Operating Active (' + act + ')', 'Operational Delay / Idle (' + del + ')'],
                     datasets: [{
                         data: [act, del],
-                        backgroundColor: ['#059669', '#d97706'],
-                        hoverOffset: 16,
-                        borderWidth: 3,
-                        borderColor: '#ffffff'
+                        backgroundColor: ['#2563eb', '#f43f5e'],
+                        hoverOffset: 20,
+                        borderWidth: 4,
+                        borderColor: '#ffffff',
+                        hoverBorderColor: '#0f172a',
+                        hoverBorderWidth: 4
                     }]
                 },
                 options: {
