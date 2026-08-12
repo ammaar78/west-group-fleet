@@ -899,7 +899,7 @@
                     label: 'Fleet Size (Trucks)',
                     data: totalCounts,
                     backgroundColor: colors,
-                    hoverOffset: 18,
+                    hoverOffset: 16,
                     borderWidth: 3,
                     borderColor: '#ffffff',
                     hoverBorderColor: '#0f172a',
@@ -910,16 +910,20 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 cutout: '55%',
+                layout: {
+                    padding: { left: 10, right: 35, top: 5, bottom: 5 }
+                },
                 plugins: {
                     legend: {
                         position: 'bottom',
-                        labels: { font: { size: 10, weight: 'bold' }, padding: 8, boxWidth: 12 }
+                        labels: { font: { size: 10, weight: 'bold' }, padding: 8, boxWidth: 10 }
                     },
                     tooltip: {
                         backgroundColor: '#0f172a',
-                        padding: 12,
-                        titleFont: { size: 13, weight: 'bold' },
-                        bodyFont: { size: 12 },
+                        padding: 8,
+                        displayColors: false,
+                        titleFont: { size: 11, weight: 'bold' },
+                        bodyFont: { size: 10, weight: 'bold' },
                         callbacks: {
                             title: items => sups[items[0].dataIndex],
                             label: item => {
@@ -930,9 +934,9 @@
                                 const pct = activePcts[idx];
                                 const share = grandTotal > 0 ? ((tot / grandTotal) * 100).toFixed(1) : '0';
                                 return [
-                                    'Total Fleet Share: ' + tot + ' trucks (' + share + '% of All Fleet)',
-                                    'Operating Active: ' + act + ' trucks (' + pct + '% Utilization)',
-                                    'Operational Delay / Idle: ' + del + ' trucks (' + (100 - pct).toFixed(1) + '%)'
+                                    'Fleet Share: ' + tot + ' trucks (' + share + '%)',
+                                    'Active: ' + act + ' trucks (' + pct + '%)',
+                                    'Delay/Idle: ' + del + ' trucks (' + (100 - pct).toFixed(1) + '%)'
                                 ];
                             }
                         }
