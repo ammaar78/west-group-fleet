@@ -147,10 +147,10 @@
         </div>
     </section>
 
-    <!-- CHARTS SECTION (3-COLUMN EXECUTIVE ANALYTICS GRID) -->
-    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Supervisor Utilization Pie/Doughnut Chart -->
-        <div class="corp-card p-5 flex flex-col">
+    <!-- CHARTS SECTION (EXECUTIVE ANALYTICS GRID: COMPACT PIE + EXPANDED BAR) -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <!-- Supervisor Utilization Pie/Doughnut Chart (Compact 3-col width) -->
+        <div class="corp-card p-5 flex flex-col lg:col-span-3">
             <div class="flex items-center justify-between mb-3">
                 <div>
                     <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Supervisor Utilization</h3>
@@ -167,8 +167,8 @@
             </div>
         </div>
 
-        <!-- Supervisor Fleet Allocation Stacked Bar -->
-        <div class="corp-card p-5 flex flex-col">
+        <!-- Supervisor Fleet Allocation Stacked Bar (Expanded 5-col width) -->
+        <div class="corp-card p-5 flex flex-col lg:col-span-5">
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Supervisor Allocation</h3>
@@ -179,8 +179,8 @@
             <div class="h-52 relative flex-1"><canvas id="chartSupervisor"></canvas></div>
         </div>
 
-        <!-- Daily Active Fleet Trend -->
-        <div class="corp-card p-5 flex flex-col">
+        <!-- Daily Active Fleet Trend (4-col width) -->
+        <div class="corp-card p-5 flex flex-col lg:col-span-4">
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">30-Day Activity Trend</h3>
