@@ -147,16 +147,36 @@
         </div>
     </section>
 
-    <!-- CHARTS SECTION -->
-    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- CHARTS SECTION (3-COLUMN EXECUTIVE ANALYTICS GRID) -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Supervisor Utilization Pie/Doughnut Chart -->
+        <div class="corp-card p-5 flex flex-col">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Supervisor Utilization</h3>
+                    <p class="text-xs text-slate-500 font-medium">Active vs delay ratio (%) per team</p>
+                </div>
+                <select id="pieSupFilter" onchange="renderPieChart()" class="bg-slate-800 text-white font-bold text-xs border border-slate-700 rounded px-2 py-1 focus:outline-none focus:border-amber-400 cursor-pointer shadow-sm">
+                    <option value="ALL">All Supervisors Overview</option>
+                </select>
+            </div>
+            <div class="h-64 relative flex-1">
+                <canvas id="chartPieSupervisor"></canvas>
+            </div>
+            <div id="pieSummaryBox" class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-700">
+                <span class="text-slate-500">Utilization Summary:</span>
+                <span id="pieSummaryText" class="font-bold text-emerald-700">Hover or select supervisor to view split</span>
+            </div>
+        </div>
+
         <!-- Supervisor Fleet Allocation Stacked Bar -->
         <div class="corp-card p-5 flex flex-col">
             <div class="flex items-center justify-between mb-4">
                 <div>
-                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Supervisor Fleet Allocation</h3>
-                    <p class="text-xs text-slate-500 font-medium">Active vs idle truck counts per supervisor team</p>
+                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Supervisor Allocation</h3>
+                    <p class="text-xs text-slate-500 font-medium">Active vs idle truck counts per team</p>
                 </div>
-                <span class="text-[11px] font-semibold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded">Click Bar Segment to Filter</span>
+                <span class="text-[11px] font-semibold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded">Click Segment to Filter</span>
             </div>
             <div class="h-64 relative flex-1"><canvas id="chartSupervisor"></canvas></div>
         </div>
@@ -165,8 +185,8 @@
         <div class="corp-card p-5 flex flex-col">
             <div class="flex items-center justify-between mb-4">
                 <div>
-                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">30-Day All Fleet Activity Trend</h3>
-                    <p class="text-xs text-slate-500 font-medium">Daily count of unique active vehicles in operation</p>
+                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">30-Day Activity Trend</h3>
+                    <p class="text-xs text-slate-500 font-medium">Daily count of active vehicles in operation</p>
                 </div>
                 <span class="text-[11px] font-semibold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded">Active Vehicles/Day</span>
             </div>
@@ -726,6 +746,7 @@
         document.getElementById('kpi-op-pct').innerText = util + '% Utilization';
 
         renderSupervisorChart();
+        renderPieChart();
         renderTable();
     }
 
@@ -842,6 +863,149 @@
 
         const baseTitle = document.getElementById('tableTitle').innerText.split(' (')[0];
         document.getElementById('tableTitle').innerText = baseTitle + ' (' + filtered.length + ' assets)';
+    }
+
+    
+    let chartPieInstance = null;
+
+    function renderPieChart() {
+        const pieSelect = document.getElementById('pieSupFilter');
+        const selectedSup = pieSelect ? pieSelect.value : 'ALL';
+        const canvas = document.getElementById('chartPieSupervisor');
+        if (!canvas) return;
+
+        if (chartPieInstance) chartPieInstance.destroy();
+
+        if (selectedSup === 'ALL') {
+            const labels = sups;
+            const activeCounts = sups.map(s => currentProcessedData.filter(d => d.Supervisor === s && String(d.DailyActivityStatus).includes('Operating')).length);
+            const totalCounts = sups.map(s => currentProcessedData.filter(d => d.Supervisor === s).length);
+            const delayCounts = sups.map(s => currentProcessedData.filter(d => d.Supervisor === s && !String(d.DailyActivityStatus).includes('Operating')).length);
+            const activePcts = sups.map((s, i) => totalCounts[i] > 0 ? parseFloat(((activeCounts[i] / totalCounts[i]) * 100).toFixed(1)) : 0);
+
+            const colors = ['#059669', '#2563eb', '#d97706', '#7c3aed', '#0284c7'];
+
+            chartPieInstance = new Chart(canvas, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Active Utilization (%)',
+                        data: activePcts,
+                        backgroundColor: colors.slice(0, labels.length),
+                        hoverOffset: 16,
+                        borderWidth: 3,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '58%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { size: 11, weight: 'bold' }, padding: 10 }
+                        },
+                        tooltip: {
+                            backgroundColor: '#0f172a',
+                            padding: 12,
+                            titleFont: { size: 13, weight: 'bold' },
+                            bodyFont: { size: 12 },
+                            callbacks: {
+                                title: items => items[0].label,
+                                label: item => {
+                                    const idx = item.dataIndex;
+                                    const tot = totalCounts[idx];
+                                    const act = activeCounts[idx];
+                                    const del = delayCounts[idx];
+                                    const pct = activePcts[idx];
+                                    return [
+                                        'Total Assigned Fleet: ' + tot + ' trucks',
+                                        'Operating Active: ' + act + ' trucks (' + pct + '%)',
+                                        'Operational Delay / Idle: ' + del + ' trucks (' + (100 - pct).toFixed(1) + '%)'
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    onClick: (evt, elements) => {
+                        if (elements.length > 0) {
+                            const idx = elements[0].index;
+                            const supName = labels[idx];
+                            chartFilter = { supervisor: supName, type: 'active' };
+                            document.getElementById('chartFilterBanner').classList.remove('hidden');
+                            document.getElementById('chartFilterBanner').classList.add('flex');
+                            document.getElementById('chartFilterText').innerText = 'Showing active trucks under ' + supName;
+                            renderTable();
+                            document.getElementById('tableBody').scrollIntoView({ behavior: 'smooth' });
+                        }
+                    }
+                }
+            });
+            document.getElementById('pieSummaryText').innerText = 'Total Fleet: ' + currentProcessedData.length + ' trucks';
+
+        } else {
+            const supName = selectedSup;
+            const tot = currentProcessedData.filter(d => d.Supervisor === supName).length;
+            const act = currentProcessedData.filter(d => d.Supervisor === supName && String(d.DailyActivityStatus).includes('Operating')).length;
+            const del = tot - act;
+            const actPct = tot > 0 ? ((act / tot) * 100).toFixed(1) : 0;
+            const delPct = tot > 0 ? ((del / tot) * 100).toFixed(1) : 0;
+
+            chartPieInstance = new Chart(canvas, {
+                type: 'pie',
+                data: {
+                    labels: ['Operating Active (' + act + ')', 'Operational Delay / Idle (' + del + ')'],
+                    datasets: [{
+                        data: [act, del],
+                        backgroundColor: ['#059669', '#d97706'],
+                        hoverOffset: 16,
+                        borderWidth: 3,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { size: 11, weight: 'bold' }, padding: 10 }
+                        },
+                        tooltip: {
+                            backgroundColor: '#0f172a',
+                            padding: 12,
+                            titleFont: { size: 13, weight: 'bold' },
+                            bodyFont: { size: 12 },
+                            callbacks: {
+                                title: () => supName,
+                                label: item => {
+                                    if (item.dataIndex === 0) {
+                                        return 'Operating Active: ' + act + ' / ' + tot + ' trucks (' + actPct + '%)';
+                                    } else {
+                                        return 'Operational Delay / Idle: ' + del + ' / ' + tot + ' trucks (' + delPct + '%)';
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    onClick: (evt, elements) => {
+                        if (elements.length > 0) {
+                            const idx = elements[0].index;
+                            const filterType = idx === 0 ? 'active' : 'idle';
+                            chartFilter = { supervisor: supName, type: filterType };
+                            document.getElementById('chartFilterBanner').classList.remove('hidden');
+                            document.getElementById('chartFilterBanner').classList.add('flex');
+                            document.getElementById('chartFilterText').innerText = 'Showing ' + (idx === 0 ? 'Active' : 'Delay') + ' trucks under ' + supName;
+                            renderTable();
+                            document.getElementById('tableBody').scrollIntoView({ behavior: 'smooth' });
+                        }
+                    }
+                }
+            });
+            document.getElementById('pieSummaryText').innerHTML = '<span class="text-emerald-700 font-bold">' + act + ' Active (' + actPct + '%)</span> / <span class="text-amber-700 font-bold">' + del + ' Delay (' + delPct + '%)</span> (Total: ' + tot + ')';
+        }
     }
 
     function renderSupervisorChart() {
