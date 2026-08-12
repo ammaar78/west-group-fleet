@@ -887,9 +887,9 @@
 
         if (selectedSup === 'ALL') {
             const labels = sups;
-            const totalCounts = sups.map(s => currentProcessedData.filter(d => d.Supervisor === s).length);
+            const totalCounts = sups.map(s => rawData.filter(d => d.Supervisor === s).length);
             const activeCounts = sups.map(s => currentProcessedData.filter(d => d.Supervisor === s && String(d.DailyActivityStatus).includes('Operating')).length);
-            const delayCounts = sups.map(s => currentProcessedData.filter(d => d.Supervisor === s && !String(d.DailyActivityStatus).includes('Operating')).length);
+            const delayCounts = sups.map(s => totalCounts[s] ? (totalCounts[s] - activeCounts[s]) : currentProcessedData.filter(d => d.Supervisor === s && !String(d.DailyActivityStatus).includes('Operating')).length);
             const activePcts = sups.map((s, i) => totalCounts[i] > 0 ? ((activeCounts[i] / totalCounts[i]) * 100).toFixed(1) : '0');
 
             const pieLabels = sups.map((s, i) => `${s} (${totalCounts[i]} trucks)`);
