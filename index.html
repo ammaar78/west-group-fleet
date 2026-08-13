@@ -370,26 +370,41 @@
         function onMonthChange() {
             const selMonth = (monthSelect && monthSelect.value && monthSelect.value !== '') ? monthSelect.value : (availableMonths[0] || '');
             const dateSelect = document.getElementById('dateFilter');
-            dateSelect.innerHTML = '<option value="ALL">Entire Month Snapshot</option>';
+            dateSelect.innerHTML = '';
+            
+            const opt7 = document.createElement('option');
+            opt7.value = 'LATEST_7_DAYS';
+            opt7.innerText = 'Latest Snapshot (Past 7 Days)';
+            opt7.selected = true;
+            dateSelect.appendChild(opt7);
+
             const dates = monthDatesMap[selMonth] || [];
             dates.forEach(d => {
                 const opt = document.createElement('option');
-                opt.value = d; opt.innerText = d;
+                opt.value = d; opt.innerText = 'Date: ' + d;
                 dateSelect.appendChild(opt);
             });
+
+            const optAll = document.createElement('option');
+            optAll.value = 'ALL_MONTH';
+            optAll.innerText = 'Entire Month Snapshot (' + selMonth + ')';
+            dateSelect.appendChild(optAll);
+
             updateDashboardView();
         }
 
         function updateDashboardView() {
             const selMonth = (monthSelect && monthSelect.value && monthSelect.value !== '') ? monthSelect.value : (availableMonths[0] || '');
-            const selDate = document.getElementById('dateFilter').value;
+            const selDate = document.getElementById('dateFilter') ? document.getElementById('dateFilter').value : 'LATEST_7_DAYS';
 
-            if (selDate === 'ALL') {
-                const datesInMonth = monthDatesMap[selMonth] || [];
+            const allDatesInMonth = monthDatesMap[selMonth] || [];
+
+            if (selDate === 'LATEST_7_DAYS') {
+                const past7Dates = allDatesInMonth.slice(0, 7);
                 currentProcessedData = rawData.map(truck => {
                     let tripCount = 0;
                     let lastActiveDate = '-';
-                    datesInMonth.forEach(dStr => {
+                    past7Dates.forEach(dStr => {
                         const c = (dailyTripsMap[truck.StdPlate] && dailyTripsMap[truck.StdPlate][dStr]) ? dailyTripsMap[truck.StdPlate][dStr] : 0;
                         tripCount += c;
                         if (c > 0 && lastActiveDate === '-') lastActiveDate = dStr;
@@ -404,7 +419,30 @@
                     return {
                         ...truck,
                         TotalTripsCount: tripCount,
-                        LatestTripDate: lastActiveDate,
+                        LatestTripDate: lastActiveDate !== '-' ? lastActiveDate : (truck.LatestTripDate || '-'),
+                        DailyActivityStatus: actStatus
+                    };
+                });
+            } else if (selDate === 'ALL_MONTH') {
+                currentProcessedData = rawData.map(truck => {
+                    let tripCount = 0;
+                    let lastActiveDate = '-';
+                    allDatesInMonth.forEach(dStr => {
+                        const c = (dailyTripsMap[truck.StdPlate] && dailyTripsMap[truck.StdPlate][dStr]) ? dailyTripsMap[truck.StdPlate][dStr] : 0;
+                        tripCount += c;
+                        if (c > 0 && lastActiveDate === '-') lastActiveDate = dStr;
+                    });
+                    const isUnassigned = isDriverUnassigned(truck.DriverName);
+                    const isInOp = truck.OfficialStatus === 'In Operation';
+                    let actStatus = 'Operational Delay / Waiting Cargo';
+                    if (isUnassigned) actStatus = 'Unassigned Driver';
+                    else if (!isInOp) actStatus = 'Inactive (' + truck.OfficialStatus + ')';
+                    else if (tripCount > 0) actStatus = 'Operating Active';
+
+                    return {
+                        ...truck,
+                        TotalTripsCount: tripCount,
+                        LatestTripDate: lastActiveDate !== '-' ? lastActiveDate : (truck.LatestTripDate || '-'),
                         DailyActivityStatus: actStatus
                     };
                 });
@@ -421,7 +459,7 @@
                     return {
                         ...truck,
                         TotalTripsCount: tripCount,
-                        LatestTripDate: tripCount > 0 ? selDate : '-',
+                        LatestTripDate: tripCount > 0 ? selDate : (truck.LatestTripDate || '-'),
                         DailyActivityStatus: actStatus
                     };
                 });
