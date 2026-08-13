@@ -13,7 +13,7 @@
         .corp-card { background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); }
     </style>
 </head>
-<body class="text-slate-800 antialiased min-h-screen flex flex-col" style="background-color: #f8fafc;">
+<body class="text-slate-800 antialiased min-h-screen flex flex-col" style="background-color: #ffffff;">
 
     <!-- HEADER / NAVIGATION BANNER -->
     <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 sticky top-0 z-40 shadow-md">
@@ -48,7 +48,7 @@
     </header>
 
     <!-- MAIN BODY CONTENT -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6" style="background-color: #f8fafc;">
+    <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6" style="background-color: #ffffff;">
 
         <!-- KPI SUMMARY CARDS (WITH CLICKABLE ACTION BANNERS & MODAL TRIGGERS) -->
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -183,7 +183,7 @@
                         <option value="UNASSIGNED" class="bg-slate-900 text-rose-400 font-bold py-1">Unassigned Drivers Only</option>
                         <option value="ACTIVE" class="bg-slate-900 text-emerald-400 font-bold py-1">Operating Active Only</option>
                         <option value="DELAY" class="bg-slate-900 text-amber-400 font-bold py-1">Operational Delay Only</option>
-                        <option value="MAINTENANCE" class="bg-slate-900 text-amber-300 font-bold py-1">🔧 In Maintenance Only</option>
+                        <option value="MAINTENANCE" class="bg-slate-900 text-amber-300 font-bold py-1">In Maintenance Only</option>
                         <option value="INACTIVE" class="bg-slate-900 text-slate-300 font-bold py-1">Inactive / Out of Service</option>
                     </select>
                     <select id="filterSup" onchange="renderTable()" class="bg-slate-50 border border-slate-300 text-slate-900 px-3 py-1.5 rounded-lg text-xs font-semibold focus:outline-none focus:border-slate-500">
@@ -528,9 +528,9 @@
                 let maintBadge = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-500"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Clean</span>';
                 const mStr = String(d.MaintenanceStatus || '');
                 if (mStr.includes('Out of Service')) {
-                    maintBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-50 text-rose-800 border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>🚨 Out of Service</span>`;
+                    maintBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-50 text-rose-800 border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Out of Service</span>`;
                 } else if (mStr !== 'No Active Order') {
-                    maintBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-300"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>🔧 ${mStr}</span>`;
+                    maintBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-300"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>${mStr}</span>`;
                 }
 
                 const plateDoorDisplay = formatPlateDoorDisplay(d.TruckPlate, d.DoorNo);
@@ -883,9 +883,9 @@
                 const mStr = String(d.MaintenanceStatus || '');
                 let maintTag = '';
                 if (mStr.includes('Out of Service')) {
-                    maintTag = `<div class="mt-1"><span class="text-[9px] font-bold text-rose-800 bg-rose-100 border border-rose-300 px-1.5 py-0.5 rounded inline-block">🚨 Out of Service</span></div>`;
+                    maintTag = `<div class="mt-1"><span class="text-[9px] font-bold text-rose-800 bg-rose-100 border border-rose-300 px-1.5 py-0.5 rounded inline-block">Out of Service</span></div>`;
                 } else if (mStr !== 'No Active Order') {
-                    maintTag = `<div class="mt-1"><span class="text-[9px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded inline-block">🔧 ${mStr}</span></div>`;
+                    maintTag = `<div class="mt-1"><span class="text-[9px] font-bold text-amber-900 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded inline-block">${mStr}</span></div>`;
                 }
 
                 div.innerHTML = `
@@ -940,7 +940,7 @@
 
             const mStr = String(truck.MaintenanceStatus || 'No Active Order');
             let mMetaTag = 'Clean / Operational';
-            if (mStr !== 'No Active Order') mMetaTag = '🔧 ' + mStr;
+            if (mStr !== 'No Active Order') mMetaTag = mStr;
 
             document.getElementById('modalTruckPlate').innerText = truckTitle;
             document.getElementById('modalTruckMeta').innerText = 'Driver: ' + (truck.DriverName || 'Unassigned') + ' | Supervisor: ' + truck.Supervisor + ' (' + truck.AssignedLocation + ') | Maintenance: ' + mMetaTag;
