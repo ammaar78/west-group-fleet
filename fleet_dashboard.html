@@ -430,14 +430,27 @@
                     if (c > 0 && lastActiveDate === '-') lastActiveDate = dStr;
                 });
 
-                // Determine date-specific Maintenance Status
+                // Implement 4-Tier Dynamic Maintenance Engine
                 let activeMaint = 'Clean';
-                if (maintDateMap[truck.StdPlate]) {
-                    for (let i = 0; i < targetDates.length; i++) {
-                        const dStr = targetDates[i];
-                        if (maintDateMap[truck.StdPlate][dStr]) {
-                            activeMaint = maintDateMap[truck.StdPlate][dStr];
-                            break;
+                const offStatus = String(truck.OfficialStatus || '').toLowerCase();
+                const drvName = String(truck.DriverName || '').toLowerCase();
+
+                if (offStatus.includes('accident') || offStatus.includes('out of service') || drvName.includes('accident')) {
+                    activeMaint = 'Out of Service (Accident)';
+                } else {
+                    if (maintDateMap && maintDateMap[truck.StdPlate]) {
+                        for (let i = 0; i < targetDates.length; i++) {
+                            const dStr = targetDates[i];
+                            if (maintDateMap[truck.StdPlate][dStr]) {
+                                activeMaint = maintDateMap[truck.StdPlate][dStr];
+                                break;
+                            }
+                        }
+                    }
+
+                    if (activeMaint === 'Clean' && truck.MaintenanceStatus && truck.MaintenanceStatus !== 'No Active Order' && truck.MaintenanceStatus !== 'Clean') {
+                        if (tripCount === 0) {
+                            activeMaint = truck.MaintenanceStatus;
                         }
                     }
                 }
