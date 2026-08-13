@@ -287,13 +287,19 @@
         let currentProcessedData = [...rawData];
         let chartFilter = null;
 
-        // Populate Month Dropdown
+        // Populate Month Dropdown with explicit default selection
         const monthSelect = document.getElementById('monthSelect');
-        availableMonths.forEach(m => {
+        monthSelect.innerHTML = '';
+        availableMonths.forEach((m, idx) => {
             const opt = document.createElement('option');
-            opt.value = m; opt.innerText = m;
+            opt.value = m;
+            opt.innerText = m;
+            if (idx === 0) opt.selected = true;
             monthSelect.appendChild(opt);
         });
+        if (availableMonths.length > 0) {
+            monthSelect.value = availableMonths[0];
+        }
 
         function isDriverUnassigned(name) {
             if (!name) return true;
@@ -330,7 +336,7 @@
         }
 
         function onMonthChange() {
-            const selMonth = monthSelect.value;
+            const selMonth = (monthSelect && monthSelect.value && monthSelect.value !== '') ? monthSelect.value : (availableMonths[0] || '');
             const dateSelect = document.getElementById('dateFilter');
             dateSelect.innerHTML = '<option value="ALL">Entire Month Snapshot</option>';
             const dates = monthDatesMap[selMonth] || [];
@@ -343,7 +349,7 @@
         }
 
         function updateDashboardView() {
-            const selMonth = monthSelect.value;
+            const selMonth = (monthSelect && monthSelect.value && monthSelect.value !== '') ? monthSelect.value : (availableMonths[0] || '');
             const selDate = document.getElementById('dateFilter').value;
 
             if (selDate === 'ALL') {
