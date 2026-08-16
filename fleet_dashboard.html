@@ -551,9 +551,11 @@
                     maintBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-300"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>${mStr}</span>`;
                 }
 
-                let kpiBadge = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-50 text-rose-800 border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>' + (d.AchievementPct > 0 ? d.AchievementPct.toFixed(1) + '%' : 'Below (0%)') + '</span>';
+                let kpiBadge = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>0.0%</span>';
                 if (d.AchievedKpi) {
                     kpiBadge = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-blue-50 text-blue-800 border border-blue-200"><span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>Achieved (' + d.AchievementPct.toFixed(1) + '%)</span>';
+                } else if (d.AchievementPct > 0) {
+                    kpiBadge = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-50 text-rose-800 border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>' + d.AchievementPct.toFixed(1) + '%</span>';
                 }
 
                 const plateDoorDisplay = formatPlateDoorDisplay(d.TruckPlate, d.DoorNo);
