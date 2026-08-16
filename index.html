@@ -86,7 +86,7 @@
                     <span class="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded" id="kpiActivePct">93.9% Utilization</span>
                 </div>
                 <div class="mt-4 pt-2 border-t border-slate-100 flex justify-between items-center text-[11px]">
-                    <span class="text-slate-500 font-semibold">Active Assets (Past 7-Day Window)</span>
+                    <span class="text-slate-500 font-semibold" id="kpiActiveSubtitle">Active Assets (Selected Snapshot)</span>
                     <span class="font-bold text-emerald-700">High Utilization</span>
                 </div>
             </div>
@@ -372,41 +372,43 @@
             const selMonth = (monthSelect && monthSelect.value && monthSelect.value !== '') ? monthSelect.value : (availableMonths[0] || '');
             const dateSelect = document.getElementById('dateFilter');
             dateSelect.innerHTML = '';
-            
-            const opt7 = document.createElement('option');
-            opt7.value = 'LATEST_7_DAYS';
-            opt7.innerText = 'Latest Snapshot (Past 7 Days)';
-            opt7.selected = true;
-            dateSelect.appendChild(opt7);
 
             const dates = monthDatesMap[selMonth] || [];
-            dates.forEach(d => {
-                const opt = document.createElement('option');
-                opt.value = d; opt.innerText = 'Date: ' + d;
-                dateSelect.appendChild(opt);
-            });
 
+            // Add Entire Month Snapshot Option
             const optAll = document.createElement('option');
             optAll.value = 'ALL_MONTH';
             optAll.innerText = 'Entire Month Snapshot (' + selMonth + ')';
             dateSelect.appendChild(optAll);
+
+            // Add Daily Date Options (Default to latest active date)
+            dates.forEach((d, idx) => {
+                const opt = document.createElement('option');
+                opt.value = d;
+                opt.innerText = 'Date: ' + d;
+                if (idx === 0) opt.selected = true;
+                dateSelect.appendChild(opt);
+            });
 
             updateDashboardView();
         }
 
         function updateDashboardView() {
             const selMonth = (monthSelect && monthSelect.value && monthSelect.value !== '') ? monthSelect.value : (availableMonths[0] || '');
-            const selDate = document.getElementById('dateFilter') ? document.getElementById('dateFilter').value : 'LATEST_7_DAYS';
-
             const allDatesInMonth = monthDatesMap[selMonth] || [];
+            const defaultDate = allDatesInMonth.length > 0 ? allDatesInMonth[0] : 'ALL_MONTH';
+            const selDate = document.getElementById('dateFilter') ? document.getElementById('dateFilter').value : defaultDate;
 
             let targetDates = [];
-            if (selDate === 'LATEST_7_DAYS') {
-                targetDates = allDatesInMonth.slice(0, 7);
-            } else if (selDate === 'ALL_MONTH') {
+            if (selDate === 'ALL_MONTH') {
                 targetDates = allDatesInMonth;
             } else {
                 targetDates = [selDate];
+            }
+
+            const subEl = document.getElementById('kpiActiveSubtitle');
+            if (subEl) {
+                subEl.innerText = selDate === 'ALL_MONTH' ? 'Active Assets (Entire Month)' : 'Active Assets (Date: ' + selDate + ')';
             }
 
             currentProcessedData = rawData.map(truck => {
