@@ -455,22 +455,30 @@
                 const achievedKpi = (achievementPct >= 100.0);
 
                 // Implement Date-Strict Maintenance Engine
-                let activeMaint = 'Clean';
                 const offStatus = String(truck.OfficialStatus || '').toLowerCase();
                 const drvName = String(truck.DriverName || '').toLowerCase();
                 const isAccidentOrOut = offStatus.includes('accident') || offStatus.includes('out service') || offStatus.includes('out of service') || drvName.includes('accident');
 
+                // 1. Period Maintenance Info (For the Maintenance Status Column Badge)
+                let periodMaintBadge = 'Clean';
                 if (isAccidentOrOut) {
-                    activeMaint = 'Out of Service (Accident)';
-                } else {
-                    if (maintDateMap && maintDateMap[truck.StdPlate]) {
-                        for (let i = 0; i < targetDates.length; i++) {
-                            const dStr = targetDates[i];
-                            if (maintDateMap[truck.StdPlate][dStr]) {
-                                activeMaint = maintDateMap[truck.StdPlate][dStr];
-                                break;
-                            }
+                    periodMaintBadge = 'Out of Service (Accident)';
+                } else if (maintDateMap && maintDateMap[truck.StdPlate]) {
+                    for (let i = 0; i < targetDates.length; i++) {
+                        const dStr = targetDates[i];
+                        if (maintDateMap[truck.StdPlate][dStr]) {
+                            periodMaintBadge = maintDateMap[truck.StdPlate][dStr];
+                            break;
                         }
+                    }
+                }
+
+                // 2. Live Current Maintenance (Strictly on the latest snapshot date of selected period)
+                const latestSnapshotDate = targetDates[0];
+                let isCurrentlyInMaint = false;
+                if (!isAccidentOrOut && maintDateMap && maintDateMap[truck.StdPlate] && latestSnapshotDate) {
+                    if (maintDateMap[truck.StdPlate][latestSnapshotDate]) {
+                        isCurrentlyInMaint = true;
                     }
                 }
 
@@ -479,7 +487,7 @@
                 let actStatus = 'Operational Delay / Waiting Cargo';
                 if (isAccidentOrOut) actStatus = 'Out of Service (Accident)';
                 else if (tripCount > 0) actStatus = 'Operating Active';
-                else if (activeMaint !== 'Clean' && activeMaint !== 'No Active Order') actStatus = 'In Maintenance';
+                else if (isCurrentlyInMaint) actStatus = 'In Maintenance';
                 else if (isUnassigned) actStatus = 'Unassigned Driver';
                 else if (!isInOp) actStatus = 'Out of Service (' + truck.OfficialStatus + ')';
 
@@ -492,14 +500,14 @@
                     AchievedKpi: achievedKpi,
                     LatestTripDate: lastActiveDate !== '-' ? lastActiveDate : (truck.LatestTripDate || '-'),
                     DailyActivityStatus: actStatus,
-                    MaintenanceStatus: activeMaint
+                    MaintenanceStatus: periodMaintBadge
                 };
             });
 
             const total = currentProcessedData.length;
             const active = currentProcessedData.filter(d => String(d.DailyActivityStatus).includes('Operating')).length;
             const outOfService = currentProcessedData.filter(d => String(d.DailyActivityStatus).includes('Out of Service') || String(d.OfficialStatus).toLowerCase().includes('accident')).length;
-            const maintenance = currentProcessedData.filter(d => !String(d.DailyActivityStatus).includes('Operating') && !String(d.DailyActivityStatus).includes('Out of Service') && !String(d.OfficialStatus).toLowerCase().includes('accident') && (String(d.DailyActivityStatus).includes('In Maintenance') || (d.MaintenanceStatus && d.MaintenanceStatus !== 'Clean' && d.MaintenanceStatus !== 'No Active Order'))).length;
+            const maintenance = currentProcessedData.filter(d => String(d.DailyActivityStatus).includes('In Maintenance')).length;
             const delay = total - active - outOfService - maintenance;
             const activePct = total > 0 ? ((active / total) * 100).toFixed(1) : 0;
 
@@ -527,7 +535,7 @@
                 const matchStatus = selectedStatus === 'ALL' ||
                     (selectedStatus === 'ACTIVE' && String(d.DailyActivityStatus).includes('Operating')) ||
                     (selectedStatus === 'DELAY' && (String(d.DailyActivityStatus).includes('Delay') || String(d.DailyActivityStatus).includes('Unassigned')) && !String(d.DailyActivityStatus).includes('Operating') && !String(d.DailyActivityStatus).includes('Out of Service') && !String(d.DailyActivityStatus).includes('Maintenance')) ||
-                    (selectedStatus === 'MAINTENANCE' && (String(d.DailyActivityStatus).includes('Maintenance') || (d.MaintenanceStatus && d.MaintenanceStatus !== 'Clean' && d.MaintenanceStatus !== 'No Active Order' && !String(d.DailyActivityStatus).includes('Operating') && !String(d.DailyActivityStatus).includes('Out of Service')))) ||
+                    (selectedStatus === 'MAINTENANCE' && String(d.DailyActivityStatus).includes('In Maintenance')) ||
                     (selectedStatus === 'OUT_OF_SERVICE' && (String(d.DailyActivityStatus).includes('Out of Service') || String(d.OfficialStatus).toLowerCase().includes('accident'))) ||
                     (selectedStatus === 'UNASSIGNED' && isDriverUnassigned(d.DriverName) && !String(d.DailyActivityStatus).includes('Out of Service')) ||
                     (selectedStatus === 'KPI_ACHIEVED' && d.AchievedKpi === true) ||
@@ -543,7 +551,7 @@
                     } else if (chartFilter.type === 'delay') {
                         return matchSup && (String(d.DailyActivityStatus).includes('Delay') || String(d.DailyActivityStatus).includes('Unassigned')) && !String(d.DailyActivityStatus).includes('Operating') && !String(d.DailyActivityStatus).includes('Out of Service') && !String(d.DailyActivityStatus).includes('Maintenance');
                     } else if (chartFilter.type === 'maintenance') {
-                        return matchSup && (String(d.DailyActivityStatus).includes('Maintenance') || (d.MaintenanceStatus && d.MaintenanceStatus !== 'Clean' && d.MaintenanceStatus !== 'No Active Order' && !String(d.DailyActivityStatus).includes('Operating') && !String(d.DailyActivityStatus).includes('Out of Service')));
+                        return matchSup && String(d.DailyActivityStatus).includes('In Maintenance');
                     } else if (chartFilter.type === 'out_of_service') {
                         return matchSup && (String(d.DailyActivityStatus).includes('Out of Service') || String(d.OfficialStatus).toLowerCase().includes('accident'));
                     } else if (chartFilter.type === 'kpi_achieved') {
@@ -677,8 +685,8 @@
                 const supTrucks = currentProcessedData.filter(d => d.Supervisor === s);
                 sa[s] = supTrucks.filter(d => String(d.DailyActivityStatus).includes('Operating')).length;
                 soos[s] = supTrucks.filter(d => String(d.DailyActivityStatus).includes('Out of Service') || String(d.OfficialStatus).toLowerCase().includes('accident')).length;
-                smaint[s] = supTrucks.filter(d => !String(d.DailyActivityStatus).includes('Operating') && !String(d.DailyActivityStatus).includes('Out of Service') && !String(d.OfficialStatus).toLowerCase().includes('accident') && (String(d.DailyActivityStatus).includes('In Maintenance') || (d.MaintenanceStatus && d.MaintenanceStatus !== 'Clean' && d.MaintenanceStatus !== 'No Active Order'))).length;
-                sdelay[s] = supTrucks.filter(d => !String(d.DailyActivityStatus).includes('Operating') && !String(d.DailyActivityStatus).includes('Out of Service') && !String(d.OfficialStatus).toLowerCase().includes('accident') && !String(d.DailyActivityStatus).includes('In Maintenance') && (d.MaintenanceStatus === 'Clean' || d.MaintenanceStatus === 'No Active Order' || !d.MaintenanceStatus)).length;
+                smaint[s] = supTrucks.filter(d => String(d.DailyActivityStatus).includes('In Maintenance')).length;
+                sdelay[s] = supTrucks.filter(d => !String(d.DailyActivityStatus).includes('Operating') && !String(d.DailyActivityStatus).includes('Out of Service') && !String(d.OfficialStatus).toLowerCase().includes('accident') && !String(d.DailyActivityStatus).includes('In Maintenance')).length;
                 skAchieved[s] = supTrucks.filter(d => d.AchievedKpi === true).length;
                 skBelow[s] = supTrucks.filter(d => d.AchievedKpi !== true).length;
             });
