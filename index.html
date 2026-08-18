@@ -61,7 +61,7 @@
 
         <!-- KPI SUMMARY CARDS (5-CARD EXECUTIVE ANALYTICS GRID) -->
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-            <!-- Total Registered Fleet -->
+            <!-- 1. Total Registered Fleet -->
             <div class="corp-card p-3.5 flex flex-col justify-between border-l-4 border-slate-800">
                 <div class="flex justify-between items-start">
                     <div>
@@ -76,7 +76,7 @@
                 </div>
             </div>
 
-            <!-- Operating Active -->
+            <!-- 2. Operating Active -->
             <div class="corp-card p-3.5 flex flex-col justify-between border-l-4 border-emerald-600">
                 <div class="flex justify-between items-start">
                     <div>
@@ -91,12 +91,12 @@
                 </div>
             </div>
 
-            <!-- Operational Delay (Idle) -->
+            <!-- 3. Operational Delay (Idle / Waiting Cargo & Driver) -->
             <div onclick="openDelayPerformanceModal()" class="corp-card p-3.5 flex flex-col justify-between border-l-4 border-amber-500 cursor-pointer hover:border-amber-600 transition group">
                 <div class="flex justify-between items-start">
                     <div>
                         <span class="text-[9px] font-black uppercase tracking-wider text-slate-500 block">OPERATIONAL DELAY</span>
-                        <span class="text-2xl font-black text-amber-600 mt-1 block" id="kpiIdleFleet">6</span>
+                        <span class="text-2xl font-black text-amber-600 mt-1 block" id="kpiIdleFleet">12</span>
                     </div>
                     <button onclick="event.stopPropagation(); openDelayPerformanceModal();" class="text-[10px] font-bold text-amber-900 bg-amber-100/80 border border-amber-300 group-hover:bg-amber-200 px-1.5 py-0.5 rounded transition">
                         Inspect &rarr;
@@ -104,11 +104,28 @@
                 </div>
                 <div class="mt-3 pt-1.5 border-t border-slate-100 flex justify-between items-center text-[10px]">
                     <span class="text-slate-500 font-semibold">0 Daily Trips</span>
-                    <span class="font-bold text-amber-800 group-hover:underline">Waiting Cargo</span>
+                    <span class="font-bold text-amber-800 group-hover:underline">Waiting Cargo/Driver</span>
                 </div>
             </div>
 
-            <!-- Out of Service / Accident -->
+            <!-- 4. In Maintenance (Active Workshop Orders) -->
+            <div onclick="filterMaintenance()" class="corp-card p-3.5 flex flex-col justify-between border-l-4 border-orange-500 cursor-pointer hover:border-orange-600 transition group">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-[9px] font-black uppercase tracking-wider text-slate-500 block">IN MAINTENANCE</span>
+                        <span class="text-2xl font-black text-orange-600 mt-1 block" id="kpiMaintenanceFleet">4</span>
+                    </div>
+                    <button onclick="event.stopPropagation(); filterMaintenance();" class="text-[10px] font-bold text-orange-900 bg-orange-100/80 border border-orange-300 group-hover:bg-orange-200 px-1.5 py-0.5 rounded transition">
+                        Filter &rarr;
+                    </button>
+                </div>
+                <div class="mt-3 pt-1.5 border-t border-slate-100 flex justify-between items-center text-[10px]">
+                    <span class="text-slate-500 font-semibold">Workshop Orders</span>
+                    <span class="font-bold text-orange-800 group-hover:underline">Click to Filter</span>
+                </div>
+            </div>
+
+            <!-- 5. Out of Service / Accident -->
             <div onclick="filterOutOfService()" class="corp-card p-3.5 flex flex-col justify-between border-l-4 border-rose-600 cursor-pointer hover:border-rose-700 transition group">
                 <div class="flex justify-between items-start">
                     <div>
@@ -122,23 +139,6 @@
                 <div class="mt-3 pt-1.5 border-t border-slate-100 flex justify-between items-center text-[10px]">
                     <span class="text-slate-500 font-semibold">Accident / Parked</span>
                     <span class="font-bold text-rose-800 group-hover:underline">Click to Filter</span>
-                </div>
-            </div>
-
-            <!-- Unassigned Drivers -->
-            <div onclick="filterUnassignedDrivers()" class="corp-card p-3.5 flex flex-col justify-between border-l-4 border-purple-600 cursor-pointer hover:border-purple-700 transition group">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <span class="text-[9px] font-black uppercase tracking-wider text-slate-500 block">UNASSIGNED DRIVERS</span>
-                        <span class="text-2xl font-black text-purple-600 mt-1 block" id="kpiUnassignedDrivers">11</span>
-                    </div>
-                    <button onclick="event.stopPropagation(); filterUnassignedDrivers();" class="text-[10px] font-bold text-purple-900 bg-purple-100/80 border border-purple-300 group-hover:bg-purple-200 px-1.5 py-0.5 rounded transition">
-                        Filter &rarr;
-                    </button>
-                </div>
-                <div class="mt-3 pt-1.5 border-t border-slate-100 flex justify-between items-center text-[10px]">
-                    <span class="text-slate-500 font-semibold">Driver Missing</span>
-                    <span class="font-bold text-purple-800 group-hover:underline">Click to Filter</span>
                 </div>
             </div>
         </section>
@@ -499,16 +499,16 @@
             const total = currentProcessedData.length;
             const active = currentProcessedData.filter(d => String(d.DailyActivityStatus).includes('Operating')).length;
             const outOfService = currentProcessedData.filter(d => String(d.DailyActivityStatus).includes('Out of Service') || String(d.OfficialStatus).toLowerCase().includes('accident')).length;
-            const idle = total - active - outOfService;
-            const unassigned = currentProcessedData.filter(d => isDriverUnassigned(d.DriverName) && !String(d.DailyActivityStatus).includes('Out of Service')).length;
+            const maintenance = currentProcessedData.filter(d => !String(d.DailyActivityStatus).includes('Operating') && !String(d.DailyActivityStatus).includes('Out of Service') && !String(d.OfficialStatus).toLowerCase().includes('accident') && (String(d.DailyActivityStatus).includes('In Maintenance') || (d.MaintenanceStatus && d.MaintenanceStatus !== 'Clean' && d.MaintenanceStatus !== 'No Active Order'))).length;
+            const delay = total - active - outOfService - maintenance;
             const activePct = total > 0 ? ((active / total) * 100).toFixed(1) : 0;
 
             document.getElementById('kpiTotalFleet').innerText = total;
             document.getElementById('kpiActiveFleet').innerText = active;
             document.getElementById('kpiActivePct').innerText = activePct + '%';
-            document.getElementById('kpiIdleFleet').innerText = idle;
+            document.getElementById('kpiIdleFleet').innerText = delay;
+            if (document.getElementById('kpiMaintenanceFleet')) document.getElementById('kpiMaintenanceFleet').innerText = maintenance;
             document.getElementById('kpiOutOfServiceFleet').innerText = outOfService;
-            document.getElementById('kpiUnassignedDrivers').innerText = unassigned;
 
             renderSupervisorChart();
             renderTable();
@@ -613,6 +613,16 @@
 
             const baseTitle = document.getElementById('tableTitle').innerText.split(' (')[0];
             document.getElementById('tableTitle').innerText = baseTitle + ' (' + filtered.length + ' assets)';
+        }
+
+        function filterMaintenance() {
+            const statusSelect = document.getElementById('filterStatus');
+            if (statusSelect) statusSelect.value = 'MAINTENANCE';
+            chartFilter = null;
+            document.getElementById('chartFilterBanner').classList.add('hidden');
+            document.getElementById('chartFilterBanner').classList.remove('flex');
+            renderTable();
+            document.getElementById('tableBody').scrollIntoView({ behavior: 'smooth' });
         }
 
         function filterOutOfService() {
@@ -1013,8 +1023,10 @@ Click any bar to filter table`;
             const selDate = document.getElementById('dateFilter').value;
 
             currentDelayedTrucks = currentProcessedData.filter(d => 
+                (String(d.DailyActivityStatus).includes('Delay') || String(d.DailyActivityStatus).includes('Unassigned')) &&
                 !String(d.DailyActivityStatus).includes('Operating') && 
                 !String(d.DailyActivityStatus).includes('Out of Service') && 
+                !String(d.DailyActivityStatus).includes('Maintenance') && 
                 !String(d.OfficialStatus).toLowerCase().includes('accident')
             );
 
