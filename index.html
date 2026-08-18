@@ -11,6 +11,31 @@
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #1e293b; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
         .corp-card { background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); }
+        
+        @media print {
+            header button, #searchInput, #filterStatus, #filterSup, .no-print, button, #chartFilterBanner, #btnExportCsvTable {
+                display: none !important;
+            }
+            body {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+            }
+            main {
+                padding: 0 !important;
+                background-color: #ffffff !important;
+            }
+            .corp-card {
+                box-shadow: none !important;
+                border: 1px solid #cbd5e1 !important;
+                break-inside: avoid;
+            }
+            table {
+                font-size: 10px !important;
+            }
+            th, td {
+                padding: 4px 6px !important;
+            }
+        }
     </style>
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col" style="background-color: #f1f5f9;">
@@ -49,8 +74,13 @@
                     <select id="dateFilter" onchange="updateDashboardView()" class="bg-slate-950 border border-blue-500/80 text-white font-extrabold text-xs px-2.5 py-1 rounded focus:outline-none cursor-pointer">
                     </select>
                 </div>
-                <button onclick="window.print()" class="bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 text-xs font-bold px-3.5 py-2 rounded-lg transition shadow-sm">
-                    Export Report
+                <button onclick="exportFilteredData()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg transition shadow-sm flex items-center gap-1.5 cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span>Export CSV</span>
+                </button>
+                <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold px-3.5 py-2 rounded-lg transition shadow-sm flex items-center gap-1.5 cursor-pointer">
+                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    <span>Print Report</span>
                 </button>
             </div>
         </div>
@@ -297,7 +327,7 @@
                     <p class="text-xs text-slate-500 font-medium">Detailed vehicle assignments, maintenance status, and operational status</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
-                    <input type="text" id="searchInput" onkeyup="renderTable()" placeholder="Search Plate, Driver, Supervisor..." class="w-60 bg-slate-50 border border-slate-300 text-slate-900 px-3 py-1.5 rounded-lg text-xs focus:outline-none focus:border-slate-500 font-medium">
+                    <input type="text" id="searchInput" onkeyup="renderTable()" placeholder="Search Plate, Driver, Supervisor..." class="w-56 bg-slate-50 border border-slate-300 text-slate-900 px-3 py-1.5 rounded-lg text-xs focus:outline-none focus:border-slate-500 font-medium">
                     <select id="filterStatus" onchange="renderTable()" class="bg-slate-800 text-white border border-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs focus:outline-none focus:border-amber-400 cursor-pointer shadow-sm hover:bg-slate-700 transition">
                         <option value="ALL" class="bg-slate-900 text-white py-1">All Operational Statuses</option>
                         <option value="ACTIVE" class="bg-slate-900 text-emerald-400 font-bold py-1">Operating Active Only</option>
@@ -311,6 +341,10 @@
                     <select id="filterSup" onchange="renderTable()" class="bg-slate-50 border border-slate-300 text-slate-900 px-3 py-1.5 rounded-lg text-xs font-semibold focus:outline-none focus:border-slate-500">
                         <option value="ALL">All Supervisors</option>
                     </select>
+                    <button id="btnExportCsvTable" onclick="exportFilteredData()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        <span>Export View</span>
+                    </button>
                 </div>
             </div>
 
@@ -764,6 +798,95 @@
             document.getElementById('chartFilterBanner').classList.add('hidden');
             document.getElementById('chartFilterBanner').classList.remove('flex');
             renderTable();
+        }
+
+        function exportFilteredData() {
+            const selMonth = (monthSelect && monthSelect.value && monthSelect.value !== '') ? monthSelect.value : (availableMonths[0] || '');
+            const selDate = document.getElementById('dateFilter') ? document.getElementById('dateFilter').value : 'LATEST_7_DAYS';
+            
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const selectedVal = document.getElementById('filterSup').value;
+            const selectedStatus = document.getElementById('filterStatus') ? document.getElementById('filterStatus').value : 'ALL';
+
+            let filtered = currentProcessedData.filter(d => {
+                const matchSearch = Object.values(d).some(v => String(v).toLowerCase().includes(query));
+                const matchSup = selectedVal === 'ALL' || d.Supervisor === selectedVal;
+                const matchStatus = selectedStatus === 'ALL' ||
+                    (selectedStatus === 'ACTIVE' && String(d.DailyActivityStatus).includes('Operating')) ||
+                    (selectedStatus === 'DELAY' && (String(d.DailyActivityStatus).includes('Delay') || String(d.DailyActivityStatus).includes('Unassigned')) && !String(d.DailyActivityStatus).includes('Operating') && !String(d.DailyActivityStatus).includes('Out of Service') && !String(d.DailyActivityStatus).includes('Maintenance')) ||
+                    (selectedStatus === 'MAINTENANCE' && String(d.DailyActivityStatus).includes('In Maintenance')) ||
+                    (selectedStatus === 'OUT_OF_SERVICE' && (String(d.DailyActivityStatus).includes('Out of Service') || String(d.OfficialStatus).toLowerCase().includes('accident'))) ||
+                    (selectedStatus === 'UNASSIGNED' && isDriverUnassigned(d.DriverName) && !String(d.DailyActivityStatus).includes('Out of Service')) ||
+                    (selectedStatus === 'KPI_ACHIEVED' && d.AchievedKpi === true) ||
+                    (selectedStatus === 'KPI_BELOW' && d.AchievedKpi !== true);
+                return matchSearch && matchSup && matchStatus;
+            });
+
+            if (chartFilter) {
+                filtered = filtered.filter(d => {
+                    const matchSup = d.Supervisor === chartFilter.supervisor;
+                    if (chartFilter.type === 'active') return matchSup && String(d.DailyActivityStatus).includes('Operating');
+                    if (chartFilter.type === 'delay') return matchSup && (String(d.DailyActivityStatus).includes('Delay') || String(d.DailyActivityStatus).includes('Unassigned')) && !String(d.DailyActivityStatus).includes('Operating') && !String(d.DailyActivityStatus).includes('Out of Service') && !String(d.DailyActivityStatus).includes('Maintenance');
+                    if (chartFilter.type === 'maintenance') return matchSup && String(d.DailyActivityStatus).includes('In Maintenance');
+                    if (chartFilter.type === 'out_of_service') return matchSup && (String(d.DailyActivityStatus).includes('Out of Service') || String(d.OfficialStatus).toLowerCase().includes('accident'));
+                    if (chartFilter.type === 'kpi_achieved') return matchSup && d.AchievedKpi === true;
+                    if (chartFilter.type === 'kpi_below') return matchSup && d.AchievedKpi !== true;
+                    return matchSup;
+                });
+            }
+
+            if (activeAgingFilter) {
+                const targetPlates = new Set(currentAgingData[activeAgingFilter].trucks);
+                filtered = filtered.filter(d => targetPlates.has(d.StdPlate));
+            }
+
+            const headers = [
+                'Door Number',
+                'Plate Number',
+                'Trailer Number',
+                'Driver Name',
+                'Supervisor Team',
+                'Assigned Location',
+                'Latest Trip Date',
+                'Trips Count',
+                'Driver KPI %',
+                'KPI Status',
+                'Maintenance Status',
+                'Daily Operational Status'
+            ];
+
+            const rows = filtered.map(d => {
+                const kpiPct = d.AchievementPct !== undefined ? d.AchievementPct + '%' : 'N/A';
+                const kpiStatus = d.AchievedKpi === true ? 'Achieved (>=100%)' : (d.AchievedKpi === false ? 'Below Target (<100%)' : 'No Target');
+                
+                return [
+                    '"' + (d.DoorNo || '') + '"',
+                    '"' + (d.StdPlate || '') + '"',
+                    '"' + (d.TrailerNumber || '-') + '"',
+                    '"' + (d.DriverName || 'Unassigned') + '"',
+                    '"' + (d.Supervisor || 'Unassigned') + '"',
+                    '"' + (d.AssignedLocation || '-') + '"',
+                    '"' + (d.LatestTripDate || '-') + '"',
+                    d.TotalTripsCount || 0,
+                    '"' + kpiPct + '"',
+                    '"' + kpiStatus + '"',
+                    '"' + (d.MaintenanceStatus || 'No Active Order') + '"',
+                    '"' + (d.DailyActivityStatus || '-') + '"'
+                ].join(',');
+            });
+
+            const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            
+            let cleanDateStr = selDate.replace(/[^a-zA-Z0-9_-]/g, '_');
+            let cleanMonthStr = selMonth.replace(/[^a-zA-Z0-9_-]/g, '_');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `West_Group_Fleet_Report_${cleanMonthStr}_${cleanDateStr}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         const sups = [...new Set(rawData.map(d => d.Supervisor))].sort();
