@@ -190,9 +190,9 @@
                         <option value="ALL" class="bg-slate-900 text-white py-1">All Operational Statuses</option>
                         <option value="ACTIVE" class="bg-slate-900 text-emerald-400 font-bold py-1">Operating Active Only</option>
                         <option value="DELAY" class="bg-slate-900 text-amber-400 font-bold py-1">Operational Delay Only</option>
+                        <option value="MAINTENANCE" class="bg-slate-900 text-orange-400 font-bold py-1">In Maintenance Only</option>
                         <option value="OUT_OF_SERVICE" class="bg-slate-900 text-rose-400 font-bold py-1">Out of Service / Accident Only</option>
                         <option value="UNASSIGNED" class="bg-slate-900 text-purple-400 font-bold py-1">Unassigned Drivers Only</option>
-                        <option value="MAINTENANCE" class="bg-slate-900 text-amber-300 font-bold py-1">In Maintenance Only</option>
                         <option value="KPI_ACHIEVED" class="bg-slate-900 text-blue-400 font-bold py-1">Achieved KPI (≥100%) Only</option>
                         <option value="KPI_BELOW" class="bg-slate-900 text-slate-300 font-bold py-1">Below KPI (&lt;100%) Only</option>
                     </select>
@@ -478,9 +478,9 @@
                 const isInOp = truck.OfficialStatus === 'In Operation';
                 let actStatus = 'Operational Delay / Waiting Cargo';
                 if (isAccidentOrOut) actStatus = 'Out of Service (Accident)';
-                else if (isUnassigned) actStatus = 'Unassigned Driver';
                 else if (tripCount > 0) actStatus = 'Operating Active';
                 else if (activeMaint !== 'Clean' && activeMaint !== 'No Active Order') actStatus = 'In Maintenance';
+                else if (isUnassigned) actStatus = 'Unassigned Driver';
                 else if (!isInOp) actStatus = 'Out of Service (' + truck.OfficialStatus + ')';
 
                 return {
@@ -499,8 +499,8 @@
             const total = currentProcessedData.length;
             const active = currentProcessedData.filter(d => String(d.DailyActivityStatus).includes('Operating')).length;
             const outOfService = currentProcessedData.filter(d => String(d.DailyActivityStatus).includes('Out of Service') || String(d.OfficialStatus).toLowerCase().includes('accident')).length;
+            const idle = total - active - outOfService;
             const unassigned = currentProcessedData.filter(d => isDriverUnassigned(d.DriverName) && !String(d.DailyActivityStatus).includes('Out of Service')).length;
-            const idle = total - active - outOfService - unassigned;
             const activePct = total > 0 ? ((active / total) * 100).toFixed(1) : 0;
 
             document.getElementById('kpiTotalFleet').innerText = total;
@@ -525,11 +525,11 @@
                 const matchSearch = Object.values(d).some(v => String(v).toLowerCase().includes(query));
                 const matchSup = selectedVal === 'ALL' || d.Supervisor === selectedVal;
                 const matchStatus = selectedStatus === 'ALL' ||
-                    (selectedStatus === 'UNASSIGNED' && isDriverUnassigned(d.DriverName)) ||
                     (selectedStatus === 'ACTIVE' && String(d.DailyActivityStatus).includes('Operating')) ||
-                    (selectedStatus === 'DELAY' && String(d.DailyActivityStatus).includes('Delay')) ||
+                    (selectedStatus === 'DELAY' && (String(d.DailyActivityStatus).includes('Delay') || String(d.DailyActivityStatus).includes('Unassigned')) && !String(d.DailyActivityStatus).includes('Operating') && !String(d.DailyActivityStatus).includes('Out of Service') && !String(d.DailyActivityStatus).includes('Maintenance')) ||
+                    (selectedStatus === 'MAINTENANCE' && (String(d.DailyActivityStatus).includes('Maintenance') || (d.MaintenanceStatus && d.MaintenanceStatus !== 'Clean' && d.MaintenanceStatus !== 'No Active Order' && !String(d.DailyActivityStatus).includes('Operating') && !String(d.DailyActivityStatus).includes('Out of Service')))) ||
                     (selectedStatus === 'OUT_OF_SERVICE' && (String(d.DailyActivityStatus).includes('Out of Service') || String(d.OfficialStatus).toLowerCase().includes('accident'))) ||
-                    (selectedStatus === 'MAINTENANCE' && d.MaintenanceStatus && d.MaintenanceStatus !== 'Clean' && d.MaintenanceStatus !== 'No Active Order') ||
+                    (selectedStatus === 'UNASSIGNED' && isDriverUnassigned(d.DriverName) && !String(d.DailyActivityStatus).includes('Out of Service')) ||
                     (selectedStatus === 'KPI_ACHIEVED' && d.AchievedKpi === true) ||
                     (selectedStatus === 'KPI_BELOW' && d.AchievedKpi !== true);
                 return matchSearch && matchSup && matchStatus;
@@ -540,8 +540,10 @@
                     const matchSup = d.Supervisor === chartFilter.supervisor;
                     if (chartFilter.type === 'active') {
                         return matchSup && String(d.DailyActivityStatus).includes('Operating');
-                    } else if (chartFilter.type === 'idle') {
-                        return matchSup && String(d.DailyActivityStatus).includes('Delay');
+                    } else if (chartFilter.type === 'delay') {
+                        return matchSup && (String(d.DailyActivityStatus).includes('Delay') || String(d.DailyActivityStatus).includes('Unassigned')) && !String(d.DailyActivityStatus).includes('Operating') && !String(d.DailyActivityStatus).includes('Out of Service') && !String(d.DailyActivityStatus).includes('Maintenance');
+                    } else if (chartFilter.type === 'maintenance') {
+                        return matchSup && (String(d.DailyActivityStatus).includes('Maintenance') || (d.MaintenanceStatus && d.MaintenanceStatus !== 'Clean' && d.MaintenanceStatus !== 'No Active Order' && !String(d.DailyActivityStatus).includes('Operating') && !String(d.DailyActivityStatus).includes('Out of Service')));
                     } else if (chartFilter.type === 'out_of_service') {
                         return matchSup && (String(d.DailyActivityStatus).includes('Out of Service') || String(d.OfficialStatus).toLowerCase().includes('accident'));
                     } else if (chartFilter.type === 'kpi_achieved') {
@@ -560,6 +562,8 @@
                 let statusBadge = '<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>' + d.DailyActivityStatus + '</span>';
                 if (String(d.DailyActivityStatus).includes('Out of Service') || String(d.OfficialStatus).toLowerCase().includes('accident')) {
                     statusBadge = '<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-900 border border-rose-300"><span class="w-1.5 h-1.5 rounded-full bg-rose-600"></span>Out of Service</span>';
+                } else if (String(d.DailyActivityStatus).includes('In Maintenance')) {
+                    statusBadge = '<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300"><span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>In Maintenance</span>';
                 } else if (String(d.DailyActivityStatus).includes('Operating')) {
                     statusBadge = '<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>Operating Active</span>';
                 } else if (String(d.DailyActivityStatus).includes('Delay')) {
@@ -658,12 +662,13 @@
         }
 
         function renderSupervisorChart() {
-            const sa = {}, si = {}, soos = {}, skAchieved = {}, skBelow = {};
+            const sa = {}, sdelay = {}, smaint = {}, soos = {}, skAchieved = {}, skBelow = {};
             sups.forEach(s => {
                 const supTrucks = currentProcessedData.filter(d => d.Supervisor === s);
                 sa[s] = supTrucks.filter(d => String(d.DailyActivityStatus).includes('Operating')).length;
                 soos[s] = supTrucks.filter(d => String(d.DailyActivityStatus).includes('Out of Service') || String(d.OfficialStatus).toLowerCase().includes('accident')).length;
-                si[s] = supTrucks.filter(d => !String(d.DailyActivityStatus).includes('Operating') && !String(d.DailyActivityStatus).includes('Out of Service') && !String(d.OfficialStatus).toLowerCase().includes('accident')).length;
+                smaint[s] = supTrucks.filter(d => !String(d.DailyActivityStatus).includes('Operating') && !String(d.DailyActivityStatus).includes('Out of Service') && !String(d.OfficialStatus).toLowerCase().includes('accident') && (String(d.DailyActivityStatus).includes('In Maintenance') || (d.MaintenanceStatus && d.MaintenanceStatus !== 'Clean' && d.MaintenanceStatus !== 'No Active Order'))).length;
+                sdelay[s] = supTrucks.filter(d => !String(d.DailyActivityStatus).includes('Operating') && !String(d.DailyActivityStatus).includes('Out of Service') && !String(d.OfficialStatus).toLowerCase().includes('accident') && !String(d.DailyActivityStatus).includes('In Maintenance') && (d.MaintenanceStatus === 'Clean' || d.MaintenanceStatus === 'No Active Order' || !d.MaintenanceStatus)).length;
                 skAchieved[s] = supTrucks.filter(d => d.AchievedKpi === true).length;
                 skBelow[s] = supTrucks.filter(d => d.AchievedKpi !== true).length;
             });
@@ -691,7 +696,7 @@
                                 if (val === undefined || val === null || val <= 0) return;
 
                                 const sup = sups[index];
-                                const totalFleet = (sa[sup] || 0) + (si[sup] || 0) + (soos[sup] || 0);
+                                const totalFleet = (sa[sup] || 0) + (sdelay[sup] || 0) + (smaint[sup] || 0) + (soos[sup] || 0);
                                 if (totalFleet <= 0) return;
 
                                 const pct = ((val / totalFleet) * 100).toFixed(1) + '%';
@@ -740,7 +745,7 @@
                         },
                         {
                             label: 'Operational Delay',
-                            data: sups.map(s => si[s]),
+                            data: sups.map(s => sdelay[s]),
                             backgroundColor: '#d97706',
                             borderColor: '#b45309',
                             borderWidth: 1.5,
@@ -748,6 +753,22 @@
                             borderSkipped: false,
                             stack: 'fleet',
                             hoverBackgroundColor: '#f59e0b',
+                            hoverBorderColor: '#0f172a',
+                            hoverBorderWidth: 2.5,
+                            maxBarThickness: 58,
+                            barPercentage: 0.88,
+                            categoryPercentage: 0.82
+                        },
+                        {
+                            label: 'In Maintenance',
+                            data: sups.map(s => smaint[s]),
+                            backgroundColor: '#ea580c',
+                            borderColor: '#c2410c',
+                            borderWidth: 1.5,
+                            borderRadius: 4,
+                            borderSkipped: false,
+                            stack: 'fleet',
+                            hoverBackgroundColor: '#f97316',
                             hoverBorderColor: '#0f172a',
                             hoverBorderWidth: 2.5,
                             maxBarThickness: 58,
@@ -831,18 +852,22 @@
                                 filterLabel = 'Operating Active';
                                 count = sa[supName];
                             } else if (dsIndex === 1) {
-                                filterType = 'idle';
+                                filterType = 'delay';
                                 filterLabel = 'Operational Delay';
-                                count = si[supName];
+                                count = sdelay[supName];
                             } else if (dsIndex === 2) {
+                                filterType = 'maintenance';
+                                filterLabel = 'In Maintenance';
+                                count = smaint[supName];
+                            } else if (dsIndex === 3) {
                                 filterType = 'out_of_service';
                                 filterLabel = 'Out of Service';
                                 count = soos[supName];
-                            } else if (dsIndex === 3) {
+                            } else if (dsIndex === 4) {
                                 filterType = 'kpi_achieved';
                                 filterLabel = 'Achieved KPI';
                                 count = skAchieved[supName];
-                            } else if (dsIndex === 4) {
+                            } else if (dsIndex === 5) {
                                 filterType = 'kpi_below';
                                 filterLabel = 'Below KPI';
                                 count = skBelow[supName];
@@ -883,19 +908,22 @@
                                 label: context => {
                                     const sup = sups[context.dataIndex];
                                     const val = context.parsed.y;
-                                    const total = (sa[sup] || 0) + (si[sup] || 0) + (soos[sup] || 0);
+                                    const total = (sa[sup] || 0) + (sdelay[sup] || 0) + (smaint[sup] || 0) + (soos[sup] || 0);
                                     const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0';
                                     return ` ${context.dataset.label}: ${val} (${pct}%)`;
                                 },
                                 footer: items => {
                                     const idx = items[0].dataIndex;
                                     const sup = sups[idx];
-                                    const tot = (sa[sup] || 0) + (si[sup] || 0) + (soos[sup] || 0);
+                                    const tot = (sa[sup] || 0) + (sdelay[sup] || 0) + (smaint[sup] || 0) + (soos[sup] || 0);
                                     const achRate = tot > 0 ? ((skAchieved[sup] / tot) * 100).toFixed(1) : '0';
                                     const actRate = tot > 0 ? ((sa[sup] / tot) * 100).toFixed(1) : '0';
+                                    const delayRate = tot > 0 ? ((sdelay[sup] / tot) * 100).toFixed(1) : '0';
+                                    const maintRate = tot > 0 ? ((smaint[sup] / tot) * 100).toFixed(1) : '0';
                                     const oosRate = tot > 0 ? ((soos[sup] / tot) * 100).toFixed(1) : '0';
                                     return `Total Fleet: ${tot} trucks
-Active: ${actRate}%  |  Out of Service: ${oosRate}%
+Active: ${actRate}% | Delay: ${delayRate}%
+Maintenance: ${maintRate}% | Out of Service: ${oosRate}%
 KPI Pass Rate: ${achRate}%
 Click any bar to filter table`;
                                 }
@@ -985,7 +1013,9 @@ Click any bar to filter table`;
             const selDate = document.getElementById('dateFilter').value;
 
             currentDelayedTrucks = currentProcessedData.filter(d => 
-                String(d.DailyActivityStatus).includes('Delay') || String(d.DailyActivityStatus).includes('Inactive')
+                !String(d.DailyActivityStatus).includes('Operating') && 
+                !String(d.DailyActivityStatus).includes('Out of Service') && 
+                !String(d.OfficialStatus).toLowerCase().includes('accident')
             );
 
             document.getElementById('modalTitle').innerText = 'Operational Delay & Fleet Performance Analytics';
