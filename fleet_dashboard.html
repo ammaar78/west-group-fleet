@@ -498,9 +498,9 @@
 
             const total = currentProcessedData.length;
             const active = currentProcessedData.filter(d => String(d.DailyActivityStatus).includes('Operating')).length;
-            const idle = currentProcessedData.filter(d => String(d.DailyActivityStatus).includes('Delay')).length;
             const outOfService = currentProcessedData.filter(d => String(d.DailyActivityStatus).includes('Out of Service') || String(d.OfficialStatus).toLowerCase().includes('accident')).length;
             const unassigned = currentProcessedData.filter(d => isDriverUnassigned(d.DriverName) && !String(d.DailyActivityStatus).includes('Out of Service')).length;
+            const idle = total - active - outOfService - unassigned;
             const activePct = total > 0 ? ((active / total) * 100).toFixed(1) : 0;
 
             document.getElementById('kpiTotalFleet').innerText = total;
