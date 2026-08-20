@@ -344,9 +344,9 @@
                             <span class="w-2.5 h-2.5 rounded-full bg-rose-600 animate-pulse"></span>
                             Chronic Maintenance Watchlist
                         </h3>
-                        <p class="text-xs text-slate-500 font-medium">Rolling 30-Day Failure Recurrence & Garage Dwell Telemetry</p>
+                        <p class="text-xs text-slate-500 font-medium" id="chronicSubtitle">Month-to-Date Failure Recurrence & Garage Dwell Telemetry</p>
                     </div>
-                    <span class="text-[10px] font-bold text-rose-800 bg-rose-100 border border-rose-300 px-2 py-0.5 rounded uppercase">30-Day Matrix</span>
+                    <span class="text-[10px] font-bold text-rose-800 bg-rose-100 border border-rose-300 px-2 py-0.5 rounded uppercase" id="chronicDateBadge">Month-to-Date Matrix</span>
                 </div>
 
                 <!-- 3 Summary Badges Row -->
@@ -376,7 +376,7 @@
                                 <th class="p-2 text-left">Plate / Door</th>
                                 <th class="p-2">Supervisor</th>
                                 <th class="p-2 text-center">Recent Job</th>
-                                <th class="p-2 text-center">30d Garage Dwell</th>
+                                <th class="p-2 text-center">MTD Garage Dwell</th>
                                 <th class="p-2 text-right">Action</th>
                             </tr>
                         </thead>
@@ -1999,21 +1999,22 @@ Click any bar to filter table`;
             const selMonth = (monthSelect && monthSelect.value && monthSelect.value !== '') ? monthSelect.value : (availableMonths[0] || '');
             const selDate = document.getElementById('dateFilter') ? document.getElementById('dateFilter').value : 'LATEST_7_DAYS';
             
-            // Build list of all dates across all available months sorted desc
-            let allKnownDates = [];
-            availableMonths.forEach(m => {
-                if (monthDatesMap[m]) allKnownDates.push(...monthDatesMap[m]);
-            });
-            allKnownDates = [...new Set(allKnownDates)].sort().reverse();
-
             const allDatesInMonth = monthDatesMap[selMonth] || [];
             let snapshotDate = allDatesInMonth[0] || '2026-08-18';
             if (selDate !== 'LATEST_7_DAYS' && selDate !== 'ALL_MONTH' && selDate !== '') {
                 snapshotDate = selDate;
             }
 
-            const snapIdx = allKnownDates.indexOf(snapshotDate);
-            const rolling30Dates = new Set(allKnownDates.slice(Math.max(0, snapIdx), snapIdx + 30));
+            const snapIdx = allDatesInMonth.indexOf(snapshotDate);
+            // Strictly from Day 1 of selected month up to snapshotDate:
+            const mtdDatesArray = (snapIdx !== -1) ? allDatesInMonth.slice(snapIdx) : allDatesInMonth;
+            const targetMaintDates = new Set(mtdDatesArray);
+
+            const startDate = allDatesInMonth[allDatesInMonth.length - 1] || 'Day 1';
+            const elSub = document.getElementById('chronicSubtitle');
+            const elBadge = document.getElementById('chronicDateBadge');
+            if (elSub) elSub.innerText = `${selMonth} (${startDate} → ${snapshotDate}) Failure Recurrence & Dwell`;
+            if (elBadge) elBadge.innerText = `${selMonth} MTD`;
 
             const chronicTrucks = [];
             let totalGarageDays = 0;
@@ -2025,21 +2026,21 @@ Click any bar to filter table`;
                 const door = truck.DoorNo || '';
 
                 const mRecords = (maintDateMap && maintDateMap[sp]) ? maintDateMap[sp] : {};
-                const mIn30 = Object.keys(mRecords).filter(d => rolling30Dates.has(d));
+                const mInMonth = Object.keys(mRecords).filter(d => targetMaintDates.has(d));
 
-                if (mIn30.length >= 2) {
-                    const daysCount = mIn30.length;
+                if (mInMonth.length >= 2) {
+                    const daysCount = mInMonth.length;
                     totalGarageDays += daysCount;
 
                     // Extract job description / category
-                    const recentDate = mIn30.sort().reverse()[0];
+                    const recentDate = mInMonth.sort().reverse()[0];
                     const recentDesc = mRecords[recentDate] || 'General Maintenance';
 
                     // Extract job numbers if present
                     const jobMatch = recentDesc.match(/J\d+/i) || recentDesc.match(/\((.*?)\)/);
                     const jobLabel = jobMatch ? jobMatch[0].replace(/[()]/g, '') : 'Workshop Order';
 
-                    const risk = (daysCount >= 4 || mIn30.length >= 3) ? 'CRITICAL' : 'HIGH_RISK';
+                    const risk = (daysCount >= 3) ? 'CRITICAL' : 'HIGH_RISK';
 
                     chronicTrucks.push({
                         StdPlate: sp,
@@ -2066,7 +2067,8 @@ Click any bar to filter table`;
                 highRiskCount: highRiskCount,
                 totalDays: totalGarageDays,
                 recurrenceRate: recRate,
-                trucks: chronicTrucks
+                trucks: chronicTrucks,
+                monthName: selMonth
             };
 
             // Update UI Summary Badges
@@ -2085,7 +2087,7 @@ Click any bar to filter table`;
             if (tbody) {
                 tbody.innerHTML = '';
                 if (chronicTrucks.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400 font-semibold italic">No chronic breakdown assets in this 30-day window.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400 font-semibold italic">No repeat breakdown assets recorded in this month.</td></tr>';
                 } else {
                     chronicTrucks.slice(0, 5).forEach(t => {
                         const tr = document.createElement('tr');
@@ -2123,11 +2125,11 @@ Click any bar to filter table`;
 
             if (target === 'ALL') {
                 targetPlates = currentChronicMaintData.trucks.map(t => t.StdPlate);
-                label = 'All ' + targetPlates.length + ' Chronic Breakdown Assets (2+ Workshop Entries in 30 Days)';
+                label = 'All ' + targetPlates.length + ' Chronic Breakdown Assets (2+ Workshop Entries in ' + (currentChronicMaintData.monthName || 'Month') + ')';
             } else {
                 targetPlates = [target];
                 const found = currentChronicMaintData.trucks.find(t => t.StdPlate === target);
-                label = 'Chronic Breakdown Asset: ' + target + (found ? ' (' + found.WorkshopDays + ' Garage Days)' : '');
+                label = 'Chronic Breakdown Asset: ' + target + (found ? ' (' + found.WorkshopDays + ' Garage Days in ' + (currentChronicMaintData.monthName || 'Month') + ')' : '');
             }
 
             if (targetPlates.length === 0) {
