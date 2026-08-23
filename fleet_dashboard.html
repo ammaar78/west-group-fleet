@@ -181,10 +181,10 @@
                     <span class="nav-label truncate">Road-Ready Idle Gap</span>
                 </a>
 
-                <!-- 4. Chronic Maintenance -->
-                <a href="#secChronicMaint" onclick="setActiveNav(this, 'secChronicMaint'); return false;" class="nav-item" title="Chronic Maintenance Watchlist">
+                <!-- 4. Maintenance Watchlist -->
+                <a href="#secChronicMaint" onclick="setActiveNav(this, 'secChronicMaint'); return false;" class="nav-item" title="Maintenance Watchlist">
                     <svg class="w-4 h-4 flex-shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                    <span class="nav-label truncate">Chronic Maintenance</span>
+                    <span class="nav-label truncate">Maintenance Watchlist</span>
                 </a>
 
                 <!-- 5. Supervisor Allocation -->
@@ -403,7 +403,7 @@
             </div>
         </section>
 
-        <!-- OPERATIONAL ACTION HUB (DUAL-CARD GRID: ROAD-READY IDLE GAP & CHRONIC MAINTENANCE WATCHLIST) -->
+        <!-- OPERATIONAL ACTION HUB (DUAL-CARD GRID: ROAD-READY IDLE GAP & MAINTENANCE WATCHLIST) -->
         <section id="secActionHub" class="grid grid-cols-1 lg:grid-cols-2 gap-5 scroll-mt-20">
             
             <!-- 1. ROAD-READY IDLE GAP -->
@@ -464,16 +464,16 @@
                 </div>
             </div>
 
-            <!-- 2. CHRONIC MAINTENANCE WATCHLIST -->
+            <!-- 2. MAINTENANCE WATCHLIST -->
             <div id="secChronicMaint" class="corp-card p-5 flex flex-col justify-between space-y-3.5 border-t-4 border-rose-600 scroll-mt-20" style="min-height: 480px;">
                 <!-- Header -->
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-2.5">
                     <div>
                         <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                             <span class="w-2.5 h-2.5 rounded-full bg-rose-600 animate-pulse"></span>
-                            Chronic Maintenance Watchlist
+                            Maintenance Watchlist
                         </h3>
-                        <p class="text-xs text-slate-500 font-medium" id="chronicSubtitle">Month-to-Date Failure Recurrence & Garage Dwell Telemetry</p>
+                        <p class="text-xs text-slate-500 font-medium" id="chronicSubtitle">Month-to-Date Repeat Breakdown & Garage Dwell Telemetry</p>
                     </div>
                     <span class="text-[10px] font-bold text-rose-800 bg-rose-100 border border-rose-300 px-2 py-0.5 rounded uppercase" id="chronicDateBadge">Month-to-Date Matrix</span>
                 </div>
@@ -517,7 +517,7 @@
                 <div class="pt-2 border-t border-slate-100 flex justify-between items-center">
                     <span class="text-[11px] text-slate-500 font-medium">Identify overhaul & replacement candidates</span>
                     <button onclick="filterByChronicMaint('ALL')" class="bg-rose-700 hover:bg-rose-600 text-white font-bold text-xs px-3.5 py-1.5 rounded-lg transition shadow-sm flex items-center gap-1.5 cursor-pointer">
-                        <span>Filter All Chronic Assets (4+ Orders) (<span id="chronicBtnCount">0</span>)</span>
+                        <span>Filter All Watchlist Assets (4+ Orders) (<span id="chronicBtnCount">0</span>)</span>
                         <span>&rarr;</span>
                     </button>
                 </div>
@@ -2256,11 +2256,11 @@ Click any bar to filter table`;
             if (target === 'ALL') {
                 const critTrucks = currentChronicMaintData.trucks.filter(t => t.WorkshopDays >= 4);
                 targetPlates = critTrucks.map(t => t.StdPlate);
-                label = 'All ' + targetPlates.length + ' Critical Chronic Breakdown Assets (4+ Workshop Orders in ' + (currentChronicMaintData.monthName || 'Month') + ')';
+                label = 'All ' + targetPlates.length + ' Maintenance Watchlist Assets (4+ Workshop Orders in ' + (currentChronicMaintData.monthName || 'Month') + ')';
             } else {
                 targetPlates = [target];
                 const found = currentChronicMaintData.trucks.find(t => t.StdPlate === target);
-                label = 'Chronic Breakdown Asset: ' + target + (found ? ' (' + found.WorkshopDays + ' Garage Days in ' + (currentChronicMaintData.monthName || 'Month') + ')' : '');
+                label = 'Maintenance Watchlist Asset: ' + target + (found ? ' (' + found.WorkshopDays + ' Garage Days in ' + (currentChronicMaintData.monthName || 'Month') + ')' : '');
             }
 
             if (targetPlates.length === 0) {
