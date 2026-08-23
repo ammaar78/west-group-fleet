@@ -481,7 +481,7 @@
                 <!-- 3 Summary Badges Row -->
                 <div class="grid grid-cols-3 gap-2.5">
                     <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-center">
-                        <span class="text-[9px] font-black uppercase text-slate-500 block">CRITICAL REPEAT (3+ VISITS)</span>
+                        <span class="text-[9px] font-black uppercase text-slate-500 block">CRITICAL REPEAT (4+ VISITS)</span>
                         <span class="text-xl font-black text-rose-600 block" id="chronicCritCount">0</span>
                         <span class="text-[9px] text-slate-400 font-medium">Assets</span>
                     </div>
@@ -517,7 +517,7 @@
                 <div class="pt-2 border-t border-slate-100 flex justify-between items-center">
                     <span class="text-[11px] text-slate-500 font-medium">Identify overhaul & replacement candidates</span>
                     <button onclick="filterByChronicMaint('ALL')" class="bg-rose-700 hover:bg-rose-600 text-white font-bold text-xs px-3.5 py-1.5 rounded-lg transition shadow-sm flex items-center gap-1.5 cursor-pointer">
-                        <span>Filter All Chronic Assets (3+ Orders) (<span id="chronicBtnCount">0</span>)</span>
+                        <span>Filter All Chronic Assets (4+ Orders) (<span id="chronicBtnCount">0</span>)</span>
                         <span>&rarr;</span>
                     </button>
                 </div>
@@ -2170,7 +2170,7 @@ Click any bar to filter table`;
                     const jobMatch = recentDesc.match(/J\d+/i) || recentDesc.match(/\((.*?)\)/);
                     const jobLabel = jobMatch ? jobMatch[0].replace(/[()]/g, '') : 'Workshop Order';
 
-                    const risk = (daysCount >= 3) ? 'CRITICAL' : 'HIGH_RISK';
+                    const risk = (daysCount >= 4) ? 'CRITICAL' : 'HIGH_RISK';
 
                     chronicTrucks.push({
                         StdPlate: sp,
@@ -2254,9 +2254,9 @@ Click any bar to filter table`;
             let label = '';
 
             if (target === 'ALL') {
-                const critTrucks = currentChronicMaintData.trucks.filter(t => t.WorkshopDays >= 3);
+                const critTrucks = currentChronicMaintData.trucks.filter(t => t.WorkshopDays >= 4);
                 targetPlates = critTrucks.map(t => t.StdPlate);
-                label = 'All ' + targetPlates.length + ' Critical Chronic Breakdown Assets (3+ Workshop Orders in ' + (currentChronicMaintData.monthName || 'Month') + ')';
+                label = 'All ' + targetPlates.length + ' Critical Chronic Breakdown Assets (4+ Workshop Orders in ' + (currentChronicMaintData.monthName || 'Month') + ')';
             } else {
                 targetPlates = [target];
                 const found = currentChronicMaintData.trucks.find(t => t.StdPlate === target);
@@ -2264,7 +2264,7 @@ Click any bar to filter table`;
             }
 
             if (targetPlates.length === 0) {
-                alert('No assets with 3+ maintenance orders found in this period.');
+                alert('No assets with 4+ maintenance orders found in this period.');
                 return;
             }
 
