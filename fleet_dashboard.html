@@ -162,7 +162,7 @@
                 </div>
 
                 <!-- 1. Overview -->
-                <a href="#secOverview" onclick="setActiveNav(this)" class="nav-item active" title="Executive Overview">
+                <a href="#secOverview" onclick="setActiveNav(this)" class="nav-item" title="Executive Overview">
                     <svg class="w-4 h-4 flex-shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                     <span class="nav-label truncate">Executive Overview</span>
                 </a>
@@ -2607,32 +2607,6 @@ Click any bar to filter table`;
                 if (sb) sb.classList.add('collapsed');
             }
         } catch(e) {}
-
-        // Scroll-spy: Highlight active nav item on scroll
-        window.addEventListener('scroll', () => {
-            const sections = [
-                { id: 'secOverview', nav: '#sidebarNav a[href="#secOverview"]' },
-                { id: 'secFleetFlow', nav: '#sidebarNav a[href="#secFleetFlow"]' },
-                { id: 'secDispatchGap', nav: '#sidebarNav a[href="#secDispatchGap"]' },
-                { id: 'secChronicMaint', nav: '#sidebarNav a[href="#secChronicMaint"]' },
-                { id: 'secSupervisor', nav: '#sidebarNav a[href="#secSupervisor"]' },
-                { id: 'secAging', nav: '#sidebarNav a[href="#secAging"]' },
-                { id: 'secMasterRegister', nav: '#sidebarNav a[href="#secMasterRegister"]' }
-            ];
-
-            const scrollPos = window.scrollY + 140;
-            for (let i = sections.length - 1; i >= 0; i--) {
-                const el = document.getElementById(sections[i].id);
-                if (el && el.offsetTop <= scrollPos) {
-                    const navEl = document.querySelector(sections[i].nav);
-                    if (navEl && !navEl.classList.contains('active')) {
-                        document.querySelectorAll('#sidebarNav .nav-item').forEach(item => item.classList.remove('active'));
-                        navEl.classList.add('active');
-                    }
-                    break;
-                }
-            }
-        });
 
         // Initial load: populate date dropdown options and render dashboard
         onMonthChange();
