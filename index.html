@@ -517,7 +517,7 @@
                 <div class="pt-2 border-t border-slate-100 flex justify-between items-center">
                     <span class="text-[11px] text-slate-500 font-medium">Identify overhaul & replacement candidates</span>
                     <button onclick="filterByChronicMaint('ALL')" class="bg-rose-700 hover:bg-rose-600 text-white font-bold text-xs px-3.5 py-1.5 rounded-lg transition shadow-sm flex items-center gap-1.5 cursor-pointer">
-                        <span>Filter All Chronic Assets (<span id="chronicBtnCount">0</span>)</span>
+                        <span>Filter All Chronic Assets (3+ Orders) (<span id="chronicBtnCount">0</span>)</span>
                         <span>&rarr;</span>
                     </button>
                 </div>
@@ -2210,7 +2210,7 @@ Click any bar to filter table`;
             if (elCrit) elCrit.innerText = critCount;
             if (elDays) elDays.innerText = totalGarageDays;
             if (elRate) elRate.innerText = recRate;
-            if (elBtnCount) elBtnCount.innerText = chronicTrucks.length;
+            if (elBtnCount) elBtnCount.innerText = critCount;
 
             // Render Table Rows (Top 5 preview)
             const tbody = document.getElementById('chronicMaintListBody');
@@ -2254,8 +2254,9 @@ Click any bar to filter table`;
             let label = '';
 
             if (target === 'ALL') {
-                targetPlates = currentChronicMaintData.trucks.map(t => t.StdPlate);
-                label = 'All ' + targetPlates.length + ' Chronic Breakdown Assets (2+ Workshop Entries in ' + (currentChronicMaintData.monthName || 'Month') + ')';
+                const critTrucks = currentChronicMaintData.trucks.filter(t => t.WorkshopDays >= 3);
+                targetPlates = critTrucks.map(t => t.StdPlate);
+                label = 'All ' + targetPlates.length + ' Critical Chronic Breakdown Assets (3+ Workshop Orders in ' + (currentChronicMaintData.monthName || 'Month') + ')';
             } else {
                 targetPlates = [target];
                 const found = currentChronicMaintData.trucks.find(t => t.StdPlate === target);
@@ -2263,7 +2264,7 @@ Click any bar to filter table`;
             }
 
             if (targetPlates.length === 0) {
-                alert('No assets found in Chronic Maintenance selection.');
+                alert('No assets with 3+ maintenance orders found in this period.');
                 return;
             }
 
