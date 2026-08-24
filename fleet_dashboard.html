@@ -603,7 +603,7 @@
                             <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
                             Road-Ready Idle Gap
                         </h3>
-                        <p class="text-xs text-slate-500 font-medium">Assigned Driver • Clean Maintenance • 0 Trips Recorded</p>
+                        <p class="text-xs text-slate-500 font-medium" id="dispatchGapSubtitle">Assigned Driver • Clean Maintenance • 0 Trips Recorded</p>
                     </div>
                     <span class="text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded uppercase">Action Required</span>
                 </div>
@@ -2607,9 +2607,26 @@ Click any bar to filter table`;
             const selDate = document.getElementById('dateFilter') ? document.getElementById('dateFilter').value : 'LATEST_7_DAYS';
             const allDatesInMonth = monthDatesMap[selMonth] || [];
 
-            let snapshotDate = allDatesInMonth[0] || '2026-08-18';
-            if (selDate !== 'LATEST_7_DAYS' && selDate !== 'ALL_MONTH' && selDate !== '') {
-                snapshotDate = selDate;
+            let targetDates = [];
+            let windowLabel = '';
+            let latestRefDate = allDatesInMonth[0] || '2026-08-23';
+
+            if (selDate === 'LATEST_7_DAYS') {
+                targetDates = allDatesInMonth.slice(0, 7);
+                windowLabel = 'Past 7 Days';
+                latestRefDate = targetDates[0] || latestRefDate;
+            } else if (selDate === 'ALL_MONTH') {
+                targetDates = allDatesInMonth;
+                windowLabel = selMonth;
+                latestRefDate = targetDates[0] || latestRefDate;
+            } else if (selDate !== '') {
+                targetDates = [selDate];
+                windowLabel = 'Date ' + selDate;
+                latestRefDate = selDate;
+            } else {
+                targetDates = allDatesInMonth.slice(0, 7);
+                windowLabel = 'Past 7 Days';
+                latestRefDate = targetDates[0] || latestRefDate;
             }
 
             const dispatchGapTrucks = [];
@@ -2628,17 +2645,29 @@ Click any bar to filter table`;
                 // 1. Must have an assigned active driver
                 if (isDriverUnassigned(drv)) return;
 
-                // 2. Must not be in maintenance on snapshot date
-                const isMaintToday = (maintDateMap && maintDateMap[sp] && maintDateMap[sp][snapshotDate]) ? true : false;
-                if (isMaintToday) return;
+                // 2. Must not be in maintenance during the selected window
+                let isMaintInPeriod = false;
+                if (maintDateMap && maintDateMap[sp]) {
+                    for (let i = 0; i < targetDates.length; i++) {
+                        if (maintDateMap[sp][targetDates[i]]) {
+                            isMaintInPeriod = true;
+                            break;
+                        }
+                    }
+                }
+                if (isMaintInPeriod) return;
 
-                // 3. Must have 0 trips on snapshot date
-                const tripsToday = (dailyTripsMap && dailyTripsMap[sp] && dailyTripsMap[sp][snapshotDate]) ? dailyTripsMap[sp][snapshotDate] : 0;
-                if (tripsToday > 0) return;
+                // 3. Must have 0 trips across the selected period
+                let periodTrips = 0;
+                targetDates.forEach(dStr => {
+                    const c = (dailyTripsMap[sp] && dailyTripsMap[sp][dStr]) ? dailyTripsMap[sp][dStr] : 0;
+                    periodTrips += c;
+                });
+                if (periodTrips > 0) return;
 
-                // 4. Calculate consecutive idle dwell days backwards
+                // 4. Calculate consecutive idle dwell days backwards from latestRefDate
                 let consecutiveIdle = 0;
-                const snapIdx = allDatesInMonth.indexOf(snapshotDate);
+                const snapIdx = allDatesInMonth.indexOf(latestRefDate);
                 const datesToCheck = (snapIdx !== -1) ? allDatesInMonth.slice(snapIdx) : allDatesInMonth;
                 for (let i = 0; i < datesToCheck.length; i++) {
                     const d = datesToCheck[i];
@@ -2671,7 +2700,8 @@ Click any bar to filter table`;
                 total: dispatchGapTrucks.length,
                 lostTrips: lostTripsEst,
                 supCounts: supCounts,
-                trucks: dispatchGapTrucks
+                trucks: dispatchGapTrucks,
+                windowLabel: windowLabel
             };
 
             // Update UI Summary Badges
@@ -2679,10 +2709,12 @@ Click any bar to filter table`;
             const elLost = document.getElementById('dispatchGapLostTrips');
             const elSupSplit = document.getElementById('dispatchGapSupSplit');
             const elBtnCount = document.getElementById('dispatchGapBtnCount');
+            const elSub = document.getElementById('dispatchGapSubtitle');
 
             if (elTotal) elTotal.innerText = dispatchGapTrucks.length;
             if (elLost) elLost.innerText = '~' + lostTripsEst;
             if (elBtnCount) elBtnCount.innerText = dispatchGapTrucks.length;
+            if (elSub) elSub.innerText = `Active Driver • Clean Maintenance • 0 Trips in ${windowLabel}`;
 
             if (elSupSplit) {
                 const supArr = Object.keys(supCounts).sort();
@@ -2701,7 +2733,7 @@ Click any bar to filter table`;
             if (tbody) {
                 tbody.innerHTML = '';
                 if (dispatchGapTrucks.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400 font-semibold italic">No road-ready idle trucks found for this date.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400 font-semibold italic">No road-ready idle trucks found for ' + windowLabel + '.</td></tr>';
                 } else {
                     dispatchGapTrucks.slice(0, 5).forEach(t => {
                         const tr = document.createElement('tr');
@@ -2724,7 +2756,7 @@ Click any bar to filter table`;
                             <td class="p-2.5 text-slate-600 font-medium">${t.Supervisor.split(' / ')[0]}</td>
                             <td class="p-2.5 text-center">${dwellBadge}</td>
                             <td class="p-2.5 text-right">
-                                <button onclick="filterByDispatchGap('${t.StdPlate}')" class="text-[10px] font-bold text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white border border-blue-200 px-2 py-0.5 rounded transition">
+                                <button onclick="filterByDispatchGap('${t.StdPlate}')" class="text-[10px] font-bold text-blue-700 bg-blue-50 hover:bg-blue-600 hover:text-white border border-blue-200 px-2 py-0.5 rounded transition cursor-pointer">
                                     Filter &rarr;
                                 </button>
                             </td>
@@ -2738,10 +2770,11 @@ Click any bar to filter table`;
         function filterByDispatchGap(target) {
             let targetPlates = [];
             let label = '';
+            const wLabel = (currentDispatchGapData && currentDispatchGapData.windowLabel) ? currentDispatchGapData.windowLabel : 'Selected Period';
 
             if (target === 'ALL') {
                 targetPlates = currentDispatchGapData.trucks.map(t => t.StdPlate);
-                label = 'All ' + targetPlates.length + ' Road-Ready Idle Trucks (Active Driver • 0 Trips)';
+                label = 'All ' + targetPlates.length + ' Road-Ready Idle Trucks (Active Driver • 0 Trips in ' + wLabel + ')';
             } else {
                 targetPlates = [target];
                 const found = currentDispatchGapData.trucks.find(t => t.StdPlate === target);
