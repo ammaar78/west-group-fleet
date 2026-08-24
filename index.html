@@ -225,9 +225,19 @@
             from { opacity: 0; transform: translateX(16px); }
             to { opacity: 1; transform: translateX(0); }
         }
-        @keyframes toastOut {
-            from { opacity: 1; transform: translateX(0); }
-            to { opacity: 0; transform: translateX(16px); }
+        /* FULLSCREEN CARD MODE */
+        .card-fullscreen {
+            position: fixed !important;
+            inset: 0.75rem !important;
+            z-index: 9999 !important;
+            width: auto !important;
+            height: auto !important;
+            max-height: calc(100vh - 1.5rem) !important;
+            background: #ffffff !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+            border: 2px solid #3b82f6 !important;
+            border-radius: 16px !important;
+            overflow-y: auto !important;
         }
 
         @media print {
@@ -302,6 +312,10 @@
                     <select id="dateFilter" onchange="updateDashboardView()" class="bg-slate-950 border border-blue-500/80 text-white font-extrabold text-xs px-2.5 py-1 rounded focus:outline-none cursor-pointer">
                     </select>
                 </div>
+                <button onclick="toggleShortcutsModal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold px-3 py-2 rounded-lg transition shadow-sm flex items-center gap-1.5 cursor-pointer" title="Keyboard Shortcuts (?)">
+                    <span class="text-amber-400 font-mono text-xs">⌨</span>
+                    <span>Shortcuts</span>
+                </button>
                 <button onclick="exportFilteredData(); showToast('Export started — check your downloads', 'success');" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-lg transition shadow-sm flex items-center gap-1.5 cursor-pointer">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     <span>Export CSV</span>
@@ -361,13 +375,19 @@
                     <span class="nav-label truncate">Supervisor Trends</span>
                 </a>
 
-                <!-- 7. Fleet Downtime (Aging Matrix) -->
+                <!-- 7. Fleet Activity Heatmap -->
+                <a href="#secHeatmap" onclick="setActiveNav(this, 'secHeatmap'); return false;" class="nav-item" title="Fleet Activity Heatmap Calendar">
+                    <svg class="w-4 h-4 flex-shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <span class="nav-label truncate">Activity Heatmap</span>
+                </a>
+
+                <!-- 8. Fleet Downtime (Aging Matrix) -->
                 <a href="#secAging" onclick="setActiveNav(this, 'secAging'); return false;" class="nav-item" title="Fleet Downtime Aging Matrix">
                     <svg class="w-4 h-4 flex-shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <span class="nav-label truncate">Fleet Downtime</span>
                 </a>
 
-                <!-- 7. Master Register -->
+                <!-- 9. Master Register -->
                 <a href="#secMasterRegister" onclick="setActiveNav(this, 'secMasterRegister'); return false;" class="nav-item" title="Fleet Master Register">
                     <svg class="w-4 h-4 flex-shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 4h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                     <span class="nav-label truncate">Master Asset Register</span>
@@ -386,7 +406,7 @@
         <!-- MAIN BODY CONTENT -->
         <main class="flex-1 w-full max-w-7xl mx-auto p-6 md:p-7 space-y-7 overflow-y-auto overflow-x-hidden" style="background-color: #f1f5f9;">
 
-            <!-- KPI SUMMARY CARDS (5-CARD EXECUTIVE ANALYTICS GRID) -->
+            <!-- KPI SUMMARY CARDS (5-CARD EXECUTIVE ANALYTICS GRID WITH MOM TELEMETRY) -->
             <section id="secOverview" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 scroll-mt-20">
             <!-- 1. Total Registered Fleet -->
             <div class="corp-card p-4 flex flex-col justify-between border-l-4 border-slate-800">
@@ -399,7 +419,7 @@
                 </div>
                 <div class="mt-3 pt-1.5 border-t border-slate-100 flex justify-between items-center text-[10px]">
                     <span class="text-slate-500 font-semibold">Total Roster</span>
-                    <span class="font-bold text-slate-800">100% Assigned</span>
+                    <span id="kpiTotalFleetDelta" class="font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded text-[9px]">100% Assigned</span>
                 </div>
             </div>
 
@@ -414,7 +434,7 @@
                 </div>
                 <div class="mt-3 pt-1.5 border-t border-slate-100 flex justify-between items-center text-[10px]">
                     <span class="text-slate-500 font-semibold">Active Assets</span>
-                    <span class="font-bold text-emerald-700">In Operation</span>
+                    <span id="kpiActiveDelta" class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Active Fleet</span>
                 </div>
             </div>
 
@@ -431,7 +451,7 @@
                 </div>
                 <div class="mt-3 pt-1.5 border-t border-slate-100 flex justify-between items-center text-[10px]">
                     <span class="text-slate-500 font-semibold">0 Daily Trips</span>
-                    <span class="font-bold text-amber-800 group-hover:underline">Waiting Cargo/Driver</span>
+                    <span id="kpiIdleDelta" class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">Waiting Cargo</span>
                 </div>
             </div>
 
@@ -448,7 +468,7 @@
                 </div>
                 <div class="mt-3 pt-1.5 border-t border-slate-100 flex justify-between items-center text-[10px]">
                     <span class="text-slate-500 font-semibold">Workshop Orders</span>
-                    <span class="font-bold text-orange-800 group-hover:underline">Click to Filter</span>
+                    <span id="kpiMaintDelta" class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-orange-50 text-orange-800 border border-orange-200">In Garage</span>
                 </div>
             </div>
 
@@ -465,7 +485,7 @@
                 </div>
                 <div class="mt-3 pt-1.5 border-t border-slate-100 flex justify-between items-center text-[10px]">
                     <span class="text-slate-500 font-semibold">Accident / Parked</span>
-                    <span class="font-bold text-rose-800 group-hover:underline">Click to Filter</span>
+                    <span id="kpiOosDelta" class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-800 border border-rose-200">Out of Service</span>
                 </div>
             </div>
         </section>
@@ -702,7 +722,12 @@
                         <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Supervisor Fleet & Driver KPI Allocation</h3>
                         <p class="text-xs text-slate-500 font-medium">Fleet Status (Active / Idle) & Driver KPI Performance (Achieved vs Below Target)</p>
                     </div>
-                    <span class="text-[11px] font-semibold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded">Click Any Bar to Filter Table</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[11px] font-semibold text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded">Click Any Bar to Filter Table</span>
+                        <button onclick="toggleCardFullscreen('secSupervisor')" class="btn-fullscreen-toggle p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition cursor-pointer" title="Toggle Fullscreen">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="relative flex-1 w-full" style="min-height: 480px; height: 480px;"><canvas id="chartSupervisor"></canvas></div>
             </div>
@@ -843,7 +868,7 @@
                     </h3>
                     <p class="text-xs text-slate-500 font-medium" id="supTrendSubtitle">Daily Operational Trip Trajectory & Total Combined Fleet Volume for Selected Month</p>
                 </div>
-                <!-- 3 Top Metric Badges -->
+                <!-- 3 Top Metric Badges + Fullscreen button -->
                 <div class="flex flex-wrap items-center gap-2 text-xs">
                     <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 flex items-center gap-1.5 shadow-sm">
                         <span class="text-[10px] font-extrabold text-slate-400 uppercase">MTD Volume:</span>
@@ -857,6 +882,9 @@
                         <span class="text-[10px] font-extrabold text-slate-400 uppercase">Daily Avg:</span>
                         <strong class="text-emerald-700 font-black text-sm" id="trendDailyAvg">0/day</strong>
                     </div>
+                    <button onclick="toggleCardFullscreen('secSupervisorTrend')" class="btn-fullscreen-toggle p-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 transition cursor-pointer shadow-sm ml-1" title="Toggle Fullscreen">
+                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                    </button>
                 </div>
             </div>
 
@@ -868,6 +896,58 @@
             <!-- Bottom Supervisor Scorecard Strip -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-100" id="supScorecardsContainer">
                 <!-- Dynamically populated per supervisor -->
+            </div>
+        </section>
+
+        <!-- FLEET ACTIVITY CALENDAR — DAILY DISPATCH HEATMAP -->
+        <section id="secHeatmap" class="corp-card p-5 space-y-4 scroll-mt-20">
+            <!-- Header & Metric Badges -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                        Fleet Activity Calendar — Daily Dispatch Heatmap
+                    </h3>
+                    <p class="text-xs text-slate-500 font-medium" id="heatmapSubtitle">Daily Trip Volume & Operational Density Across Entire Fleet for Selected Month</p>
+                </div>
+                <!-- Heatmap Summary Pills & Fullscreen button -->
+                <div class="flex flex-wrap items-center gap-2 text-xs">
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 flex items-center gap-1.5 shadow-sm">
+                        <span class="text-[10px] font-extrabold text-slate-400 uppercase">Active Days:</span>
+                        <strong class="text-slate-900 font-black text-sm" id="heatmapActiveDays">0</strong>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 flex items-center gap-1.5 shadow-sm">
+                        <span class="text-[10px] font-extrabold text-slate-400 uppercase">Peak Dispatch:</span>
+                        <strong class="text-emerald-700 font-black text-sm" id="heatmapPeakDispatch">0</strong>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 flex items-center gap-1.5 shadow-sm">
+                        <span class="text-[10px] font-extrabold text-slate-400 uppercase">Total Trips:</span>
+                        <strong class="text-blue-700 font-black text-sm" id="heatmapTotalTrips">0</strong>
+                    </div>
+                    <button onclick="toggleCardFullscreen('secHeatmap')" class="btn-fullscreen-toggle p-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 transition cursor-pointer shadow-sm ml-1" title="Toggle Fullscreen">
+                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Heatmap Calendar Grid Container -->
+            <div id="heatmapGridContainer" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5 pt-1">
+                <!-- Dynamically generated day tiles -->
+            </div>
+
+            <!-- Footer Legend & Instructions -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100 text-[11px] text-slate-500 font-medium">
+                <div class="flex items-center gap-1.5">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 mr-1">Activity Scale:</span>
+                    <span class="flex items-center gap-1"><span class="w-3.5 h-3.5 rounded bg-slate-100 border border-slate-200 inline-block"></span> 0</span>
+                    <span class="flex items-center gap-1 ml-1.5"><span class="w-3.5 h-3.5 rounded bg-emerald-100 border border-emerald-300 inline-block"></span> 1–600</span>
+                    <span class="flex items-center gap-1 ml-1.5"><span class="w-3.5 h-3.5 rounded bg-emerald-200 border border-emerald-400 inline-block"></span> 601–1,000</span>
+                    <span class="flex items-center gap-1 ml-1.5"><span class="w-3.5 h-3.5 rounded bg-emerald-400 border border-emerald-500 inline-block"></span> 1,001–1,250</span>
+                    <span class="flex items-center gap-1 ml-1.5"><span class="w-3.5 h-3.5 rounded bg-emerald-600 border border-emerald-700 inline-block"></span> 1,251+</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded text-[10px] border border-slate-200">Tip: Click any day tile to inspect date snapshot</span>
+                </div>
             </div>
         </section>
 
@@ -886,8 +966,8 @@
                     <p class="text-xs text-slate-500 font-medium">Detailed vehicle assignments, maintenance status, and operational status</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
-                    <input type="text" id="searchInput" onkeyup="renderTable()" placeholder="Search Plate, Driver, Supervisor..." class="w-56 bg-slate-50 border border-slate-300 text-slate-900 px-3 py-1.5 rounded-lg text-xs focus:outline-none focus:border-slate-500 font-medium">
-                    <select id="filterStatus" onchange="renderTable()" class="bg-slate-800 text-white border border-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs focus:outline-none focus:border-amber-400 cursor-pointer shadow-sm hover:bg-slate-700 transition">
+                    <input type="text" id="searchInput" onkeyup="resetAndRenderTable()" placeholder="Search Plate, Driver, Supervisor... (Press '/' to focus)" class="w-64 bg-slate-50 border border-slate-300 text-slate-900 px-3 py-1.5 rounded-lg text-xs focus:outline-none focus:border-slate-500 font-medium">
+                    <select id="filterStatus" onchange="resetAndRenderTable()" class="bg-slate-800 text-white border border-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs focus:outline-none focus:border-amber-400 cursor-pointer shadow-sm hover:bg-slate-700 transition">
                         <option value="ALL" class="bg-slate-900 text-white py-1">All Operational Statuses</option>
                         <option value="ACTIVE" class="bg-slate-900 text-emerald-400 font-bold py-1">Operating Active Only</option>
                         <option value="DELAY" class="bg-slate-900 text-amber-400 font-bold py-1">Operational Delay Only</option>
@@ -897,7 +977,7 @@
                         <option value="KPI_ACHIEVED" class="bg-slate-900 text-blue-400 font-bold py-1">Achieved KPI (≥100%) Only</option>
                         <option value="KPI_BELOW" class="bg-slate-900 text-slate-300 font-bold py-1">Below KPI (&lt;100%) Only</option>
                     </select>
-                    <select id="filterSup" onchange="renderTable()" class="bg-slate-50 border border-slate-300 text-slate-900 px-3 py-1.5 rounded-lg text-xs font-semibold focus:outline-none focus:border-slate-500">
+                    <select id="filterSup" onchange="resetAndRenderTable()" class="bg-slate-50 border border-slate-300 text-slate-900 px-3 py-1.5 rounded-lg text-xs font-semibold focus:outline-none focus:border-slate-500">
                         <option value="ALL">All Supervisors</option>
                     </select>
                     <button id="btnExportCsvTable" onclick="exportFilteredData(); showToast('Export started — check your downloads', 'success');" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer">
@@ -926,6 +1006,25 @@
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-slate-200 bg-white"></tbody>
                 </table>
+            </div>
+
+            <!-- Table Pagination & Page Size Toolbar -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200 text-xs">
+                <div class="flex items-center gap-2 text-slate-600 font-medium">
+                    <span>Show</span>
+                    <select id="tablePageSize" onchange="changeTablePageSize(this.value)" class="bg-white border border-slate-300 rounded px-2.5 py-1 font-bold text-slate-800 focus:outline-none cursor-pointer">
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="-1">All Assets</option>
+                    </select>
+                    <span>assets per page</span>
+                    <span class="text-slate-300 font-normal">•</span>
+                    <span id="tablePageInfo" class="font-bold text-slate-800">Showing 1–25 of 343 assets</span>
+                </div>
+                <div id="tablePagination" class="flex items-center gap-1">
+                    <!-- Dynamically generated pagination pills -->
+                </div>
             </div>
         </section>
 
@@ -1222,13 +1321,62 @@
             if (document.getElementById('kpiMaintenanceFleet')) document.getElementById('kpiMaintenanceFleet').innerText = maintenance;
             document.getElementById('kpiOutOfServiceFleet').innerText = outOfService;
 
+            // Month-over-Month Baseline Comparison
+            const mIdx = availableMonths.indexOf(selMonth);
+            if (mIdx !== -1 && mIdx + 1 < availableMonths.length) {
+                const prevM = availableMonths[mIdx + 1];
+                let prevActive = 0;
+                rawData.forEach(t => {
+                    const pt = (monthlyTripsMap[t.StdPlate] && monthlyTripsMap[t.StdPlate][prevM]) ? monthlyTripsMap[t.StdPlate][prevM] : 0;
+                    if (pt > 0) prevActive++;
+                });
+                const actDelta = active - prevActive;
+                const actSign = actDelta >= 0 ? '+' : '';
+                const elActDelta = document.getElementById('kpiActiveDelta');
+                if (elActDelta) {
+                    elActDelta.innerText = `${actSign}${actDelta} vs ${prevM.split(' ')[0]}`;
+                    elActDelta.className = `text-[9px] font-bold px-1.5 py-0.5 rounded ${actDelta >= 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`;
+                }
+                const elTotDelta = document.getElementById('kpiTotalFleetDelta');
+                if (elTotDelta) elTotDelta.innerText = `vs ${prevM.split(' ')[0]}`;
+            } else {
+                const elActDelta = document.getElementById('kpiActiveDelta');
+                if (elActDelta) {
+                    elActDelta.innerText = 'Baseline Month';
+                    elActDelta.className = 'text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200';
+                }
+            }
+
             updateFleetFlowMigration();
             updateAgingTelemetry();
             updateDispatchGapTelemetry();
             updateChronicMaintTelemetry();
             renderSupervisorChart();
             updateSupervisorTrendChart();
+            updateFleetHeatmap();
             renderTable();
+        }
+
+        // Master Register Pagination State
+        let tableCurrentPage = 1;
+        let tablePageSize = 25;
+
+        function resetAndRenderTable() {
+            tableCurrentPage = 1;
+            renderTable();
+        }
+
+        function changeTablePageSize(val) {
+            tablePageSize = parseInt(val);
+            tableCurrentPage = 1;
+            renderTable();
+        }
+
+        function changeTablePage(p) {
+            tableCurrentPage = p;
+            renderTable();
+            const el = document.getElementById('secMasterRegister');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function renderTable() {
@@ -1292,7 +1440,18 @@
                 filtered = filtered.filter(d => targetPlates.has(d.StdPlate));
             }
 
-            filtered.forEach(d => {
+            // Pagination Calculations
+            const totalItems = filtered.length;
+            const pageSize = tablePageSize === -1 ? totalItems : tablePageSize;
+            const totalPages = tablePageSize === -1 ? 1 : (Math.ceil(totalItems / pageSize) || 1);
+            if (tableCurrentPage > totalPages) tableCurrentPage = totalPages;
+            if (tableCurrentPage < 1) tableCurrentPage = 1;
+
+            const startIdx = tablePageSize === -1 ? 0 : (tableCurrentPage - 1) * pageSize;
+            const endIdx = tablePageSize === -1 ? totalItems : Math.min(startIdx + pageSize, totalItems);
+            const pageItems = filtered.slice(startIdx, endIdx);
+
+            pageItems.forEach(d => {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 transition border-b border-slate-100';
                 
@@ -1349,7 +1508,64 @@
             });
 
             const baseTitle = document.getElementById('tableTitle').innerText.split(' (')[0];
-            document.getElementById('tableTitle').innerText = baseTitle + ' (' + filtered.length + ' assets)';
+            document.getElementById('tableTitle').innerText = baseTitle + ' (' + totalItems + ' assets)';
+
+            // Update Pagination UI
+            const elPageInfo = document.getElementById('tablePageInfo');
+            if (elPageInfo) {
+                elPageInfo.innerText = totalItems === 0 
+                    ? 'Showing 0 assets' 
+                    : `Showing ${startIdx + 1}–${endIdx} of ${totalItems} assets`;
+            }
+
+            const elPagination = document.getElementById('tablePagination');
+            if (elPagination) {
+                elPagination.innerHTML = '';
+                if (totalPages > 1) {
+                    const btnPrev = document.createElement('button');
+                    btnPrev.className = `px-2.5 py-1 rounded text-xs font-bold transition border ${tableCurrentPage === 1 ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50 cursor-pointer'}`;
+                    btnPrev.innerHTML = '&larr; Prev';
+                    btnPrev.disabled = (tableCurrentPage === 1);
+                    btnPrev.onclick = () => changeTablePage(tableCurrentPage - 1);
+                    elPagination.appendChild(btnPrev);
+
+                    let pages = [];
+                    if (totalPages <= 7) {
+                        for (let i = 1; i <= totalPages; i++) pages.push(i);
+                    } else {
+                        pages.push(1);
+                        if (tableCurrentPage > 3) pages.push('...');
+                        const startP = Math.max(2, tableCurrentPage - 1);
+                        const endP = Math.min(totalPages - 1, tableCurrentPage + 1);
+                        for (let i = startP; i <= endP; i++) pages.push(i);
+                        if (tableCurrentPage < totalPages - 2) pages.push('...');
+                        pages.push(totalPages);
+                    }
+
+                    pages.forEach(p => {
+                        if (p === '...') {
+                            const span = document.createElement('span');
+                            span.className = 'px-1.5 py-1 text-slate-400 text-xs font-bold';
+                            span.innerText = '…';
+                            elPagination.appendChild(span);
+                        } else {
+                            const btnP = document.createElement('button');
+                            const isAct = (p === tableCurrentPage);
+                            btnP.className = `px-2.5 py-1 rounded text-xs font-bold transition border ${isAct ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50 cursor-pointer'}`;
+                            btnP.innerText = p;
+                            btnP.onclick = () => changeTablePage(p);
+                            elPagination.appendChild(btnP);
+                        }
+                    });
+
+                    const btnNext = document.createElement('button');
+                    btnNext.className = `px-2.5 py-1 rounded text-xs font-bold transition border ${tableCurrentPage === totalPages ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50 cursor-pointer'}`;
+                    btnNext.innerHTML = 'Next &rarr;';
+                    btnNext.disabled = (tableCurrentPage === totalPages);
+                    btnNext.onclick = () => changeTablePage(tableCurrentPage + 1);
+                    elPagination.appendChild(btnNext);
+                }
+            }
         }
 
         function filterMaintenance() {
@@ -3039,6 +3255,244 @@ Click any bar to filter table`;
         }
 
         // ==============================================================================
+        // FLEET ACTIVITY HEATMAP CALENDAR (ALL TRIPS FROM ALL FLEET)
+        // ==============================================================================
+        function updateFleetHeatmap() {
+            const selMonth = (monthSelect && monthSelect.value && monthSelect.value !== '') ? monthSelect.value : (availableMonths[0] || '');
+            const rawDates = monthDatesMap[selMonth] || [];
+            const container = document.getElementById('heatmapGridContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (rawDates.length === 0) {
+                container.innerHTML = '<div class="col-span-full py-8 text-center text-xs text-slate-400 font-bold">No dispatch data recorded for ' + selMonth + '</div>';
+                return;
+            }
+
+            // Chronological order (Day 1 -> Day N)
+            const datesAsc = rawDates.slice().reverse();
+
+            let totalMonthTrips = 0;
+            let peakTrips = 0;
+            let activeDaysCount = 0;
+
+            const dayData = [];
+
+            datesAsc.forEach(dStr => {
+                let dayTotal = 0;
+                let activeTrucks = 0;
+                const supTrips = {};
+
+                rawData.forEach(truck => {
+                    const sp = truck.StdPlate;
+                    const sup = truck.Supervisor;
+                    const c = (dailyTripsMap[sp] && dailyTripsMap[sp][dStr]) ? dailyTripsMap[sp][dStr] : 0;
+                    if (c > 0) {
+                        dayTotal += c;
+                        activeTrucks++;
+                        supTrips[sup] = (supTrips[sup] || 0) + c;
+                    }
+                });
+
+                totalMonthTrips += dayTotal;
+                if (dayTotal > peakTrips) peakTrips = dayTotal;
+                if (dayTotal > 0) activeDaysCount++;
+
+                let topSup = 'N/A';
+                let topSupVal = 0;
+                for (const s in supTrips) {
+                    if (supTrips[s] > topSupVal) {
+                        topSupVal = supTrips[s];
+                        topSup = s;
+                    }
+                }
+
+                dayData.push({
+                    dateStr: dStr,
+                    totalTrips: dayTotal,
+                    activeTrucks: activeTrucks,
+                    topSup: topSup,
+                    topSupTrips: topSupVal
+                });
+            });
+
+            // Update Summary Badges
+            const elActDays = document.getElementById('heatmapActiveDays');
+            const elPeak = document.getElementById('heatmapPeakDispatch');
+            const elTot = document.getElementById('heatmapTotalTrips');
+            const elSub = document.getElementById('heatmapSubtitle');
+
+            if (elActDays) elActDays.innerText = `${activeDaysCount} / ${datesAsc.length} Days`;
+            if (elPeak) elPeak.innerText = `${peakTrips.toLocaleString()} Trips`;
+            if (elTot) elTot.innerText = `${totalMonthTrips.toLocaleString()} Trips`;
+            if (elSub) elSub.innerText = `Daily Trip Volume & Operational Density Across Entire Fleet (${totalMonthTrips.toLocaleString()} Total Trips in ${selMonth})`;
+
+            // Render Grid Tiles
+            const selDate = document.getElementById('dateFilter') ? document.getElementById('dateFilter').value : 'LATEST_7_DAYS';
+
+            dayData.forEach(item => {
+                const dObj = new Date(item.dateStr);
+                const dayNum = item.dateStr.split('-')[2];
+                const weekday = isNaN(dObj) ? '' : dObj.toLocaleString('default', { weekday: 'short' });
+                const isCurrentFilter = (selDate === item.dateStr);
+
+                // Color scale based on trips
+                let bgClass = 'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-400';
+                let tripTextClass = 'text-slate-500 font-bold';
+                let badgeClass = 'bg-slate-200/70 text-slate-700';
+
+                if (item.totalTrips >= 1251) {
+                    bgClass = 'bg-emerald-600 border-emerald-700 text-white shadow-sm hover:bg-emerald-500';
+                    tripTextClass = 'text-white font-black';
+                    badgeClass = 'bg-white/20 text-white';
+                } else if (item.totalTrips >= 1001) {
+                    bgClass = 'bg-emerald-300 border-emerald-400 text-emerald-950 hover:bg-emerald-200 shadow-sm';
+                    tripTextClass = 'text-emerald-950 font-black';
+                    badgeClass = 'bg-emerald-950/15 text-emerald-950 font-bold';
+                } else if (item.totalTrips >= 601) {
+                    bgClass = 'bg-emerald-100 border-emerald-300 text-emerald-900 hover:bg-emerald-50';
+                    tripTextClass = 'text-emerald-800 font-bold';
+                    badgeClass = 'bg-emerald-200 text-emerald-800 font-bold';
+                } else if (item.totalTrips > 0) {
+                    bgClass = 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:border-emerald-300';
+                    tripTextClass = 'text-emerald-700 font-semibold';
+                    badgeClass = 'bg-emerald-100 text-emerald-700';
+                }
+
+                const activeRing = isCurrentFilter ? 'ring-2 ring-blue-500 ring-offset-2' : '';
+
+                const tile = document.createElement('div');
+                tile.className = `p-2.5 rounded-xl border transition-all duration-150 cursor-pointer flex flex-col justify-between select-none ${bgClass} ${activeRing}`;
+                tile.onclick = () => selectDateFromHeatmap(item.dateStr);
+                tile.title = `${item.dateStr}: ${item.totalTrips.toLocaleString()} trips across entire fleet (${item.activeTrucks} active trucks) | Top: ${item.topSup} (${item.topSupTrips})`;
+
+                tile.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs font-black">${dayNum} <span class="text-[9px] font-semibold opacity-80 uppercase">${weekday}</span></span>
+                        <span class="text-[8px] font-bold px-1.5 py-0.5 rounded-full ${badgeClass}">${item.activeTrucks} assets</span>
+                    </div>
+                    <div class="my-1 text-center">
+                        <span class="text-base tracking-tight block ${tripTextClass}">${item.totalTrips > 0 ? item.totalTrips.toLocaleString() : '0'}</span>
+                        <span class="text-[8px] font-medium opacity-75 uppercase tracking-wider block">Trips</span>
+                    </div>
+                    <div class="pt-1 border-t border-black/10 flex justify-between items-center text-[8px] opacity-85">
+                        <span class="truncate font-semibold">${item.topSup}</span>
+                        <span class="font-bold">${item.topSupTrips > 0 ? item.topSupTrips : ''}</span>
+                    </div>
+                `;
+                container.appendChild(tile);
+            });
+        }
+
+        function selectDateFromHeatmap(dateStr) {
+            const dateSelect = document.getElementById('dateFilter');
+            if (dateSelect) {
+                dateSelect.value = dateStr;
+                updateDashboardView();
+                showToast(`Switched snapshot to ${dateStr}`, 'success');
+                const sec = document.getElementById('secOverview');
+                if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // ==============================================================================
+        // FULLSCREEN CARD EXPAND / COLLAPSE
+        // ==============================================================================
+        function toggleCardFullscreen(cardId) {
+            const card = document.getElementById(cardId);
+            if (!card) return;
+            const isFull = card.classList.toggle('card-fullscreen');
+            const btn = card.querySelector('.btn-fullscreen-toggle');
+            if (btn) {
+                btn.innerHTML = isFull 
+                    ? `<svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`
+                    : `<svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>`;
+            }
+            setTimeout(() => {
+                if (cardId === 'secSupervisor' && chartSupInstance) {
+                    chartSupInstance.resize();
+                } else if (cardId === 'secSupervisorTrend' && chartSupervisorTrendInstance) {
+                    chartSupervisorTrendInstance.resize();
+                }
+                window.dispatchEvent(new Event('resize'));
+            }, 50);
+            showToast(isFull ? 'Entered Fullscreen (Press Esc to exit)' : 'Exited Fullscreen', 'info');
+        }
+
+        // ==============================================================================
+        // KEYBOARD SHORTCUTS & CHEATSHEET MODAL
+        // ==============================================================================
+        function toggleShortcutsModal() {
+            const m = document.getElementById('shortcutsModal');
+            if (!m) return;
+            const isHidden = m.classList.contains('hidden');
+            if (isHidden) {
+                m.classList.remove('hidden');
+                m.classList.add('flex');
+            } else {
+                m.classList.add('hidden');
+                m.classList.remove('flex');
+            }
+        }
+
+        function closeShortcutsModal() {
+            const m = document.getElementById('shortcutsModal');
+            if (m) {
+                m.classList.add('hidden');
+                m.classList.remove('flex');
+            }
+        }
+
+        document.addEventListener('keydown', function(e) {
+            const activeTag = (document.activeElement && document.activeElement.tagName) ? document.activeElement.tagName.toLowerCase() : '';
+            const isInput = activeTag === 'input' || activeTag === 'select' || activeTag === 'textarea';
+
+            if (e.key === 'Escape') {
+                closeDelayModal();
+                closeShortcutsModal();
+                document.querySelectorAll('.card-fullscreen').forEach(el => el.classList.remove('card-fullscreen'));
+                window.dispatchEvent(new Event('resize'));
+                if (isInput) document.activeElement.blur();
+                return;
+            }
+
+            if (isInput) return;
+
+            if (e.key === '/') {
+                e.preventDefault();
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.focus();
+                    searchInput.select();
+                    showToast('Search focused', 'info');
+                }
+            } else if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+                e.preventDefault();
+                toggleShortcutsModal();
+            } else if (e.key >= '1' && e.key <= '9') {
+                const sections = [
+                    'secOverview',
+                    'secFleetFlow',
+                    'secDispatchGap',
+                    'secChronicMaint',
+                    'secSupervisor',
+                    'secSupervisorTrend',
+                    'secHeatmap',
+                    'secAging',
+                    'secMasterRegister'
+                ];
+                const secId = sections[parseInt(e.key) - 1];
+                if (secId) {
+                    const el = document.getElementById(secId);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        showToast('Jumped to ' + (el.querySelector('h3') ? el.querySelector('h3').innerText.trim().slice(0, 30) : 'Section ' + e.key), 'info');
+                    }
+                }
+            }
+        });
+
+        // ==============================================================================
         // SIDEBAR NAVIGATION & SCROLL-SPY
         // ==============================================================================
         function toggleSidebar() {
@@ -3095,6 +3549,87 @@ Click any bar to filter table`;
             } catch(e) {}
         }
     </script>
+
+    <!-- KEYBOARD SHORTCUTS MODAL -->
+    <div id="shortcutsModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full flex flex-col overflow-hidden border border-slate-300">
+            <div class="p-4 text-white flex justify-between items-center border-b border-slate-800" style="background: linear-gradient(180deg, #0f172a 0%, #0b1220 100%);">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-bold text-sm">⌨</span>
+                    <h3 class="text-sm font-bold text-white uppercase tracking-wider">Keyboard Shortcuts</h3>
+                </div>
+                <button onclick="toggleShortcutsModal()" class="text-slate-400 hover:text-white transition text-lg font-bold p-1 cursor-pointer">&times;</button>
+            </div>
+            <div class="p-5 space-y-4 text-xs text-slate-700 max-h-[75vh] overflow-y-auto">
+                <div class="space-y-2">
+                    <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider block">Global Navigation</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="flex justify-between items-center p-2 rounded bg-slate-50 border border-slate-200">
+                            <span class="font-semibold">Quick Search</span>
+                            <kbd class="px-2 py-0.5 rounded bg-white border border-slate-300 font-mono font-bold shadow-sm">/</kbd>
+                        </div>
+                        <div class="flex justify-between items-center p-2 rounded bg-slate-50 border border-slate-200">
+                            <span class="font-semibold">Close / Exit</span>
+                            <kbd class="px-2 py-0.5 rounded bg-white border border-slate-300 font-mono font-bold shadow-sm">Esc</kbd>
+                        </div>
+                        <div class="flex justify-between items-center p-2 rounded bg-slate-50 border border-slate-200">
+                            <span class="font-semibold">Shortcuts Help</span>
+                            <kbd class="px-2 py-0.5 rounded bg-white border border-slate-300 font-mono font-bold shadow-sm">?</kbd>
+                        </div>
+                        <div class="flex justify-between items-center p-2 rounded bg-slate-50 border border-slate-200">
+                            <span class="font-semibold">Print Report</span>
+                            <kbd class="px-2 py-0.5 rounded bg-white border border-slate-300 font-mono font-bold shadow-sm">Ctrl+P</kbd>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider block">Jump to Dashboard Section</span>
+                    <div class="grid grid-cols-2 gap-2 font-medium">
+                        <div class="flex justify-between items-center p-2 rounded bg-slate-50 border border-slate-200">
+                            <span>1. Executive Overview</span>
+                            <kbd class="px-2 py-0.5 rounded bg-white border border-slate-300 font-mono font-bold shadow-sm">1</kbd>
+                        </div>
+                        <div class="flex justify-between items-center p-2 rounded bg-slate-50 border border-slate-200">
+                            <span>2. Daily Fleet Flow</span>
+                            <kbd class="px-2 py-0.5 rounded bg-white border border-slate-300 font-mono font-bold shadow-sm">2</kbd>
+                        </div>
+                        <div class="flex justify-between items-center p-2 rounded bg-slate-50 border border-slate-200">
+                            <span>3. Road-Ready Gap</span>
+                            <kbd class="px-2 py-0.5 rounded bg-white border border-slate-300 font-mono font-bold shadow-sm">3</kbd>
+                        </div>
+                        <div class="flex justify-between items-center p-2 rounded bg-slate-50 border border-slate-200">
+                            <span>4. Maint. Watchlist</span>
+                            <kbd class="px-2 py-0.5 rounded bg-white border border-slate-300 font-mono font-bold shadow-sm">4</kbd>
+                        </div>
+                        <div class="flex justify-between items-center p-2 rounded bg-slate-50 border border-slate-200">
+                            <span>5. Supervisor Allocation</span>
+                            <kbd class="px-2 py-0.5 rounded bg-white border border-slate-300 font-mono font-bold shadow-sm">5</kbd>
+                        </div>
+                        <div class="flex justify-between items-center p-2 rounded bg-slate-50 border border-slate-200">
+                            <span>6. Supervisor Trends</span>
+                            <kbd class="px-2 py-0.5 rounded bg-white border border-slate-300 font-mono font-bold shadow-sm">6</kbd>
+                        </div>
+                        <div class="flex justify-between items-center p-2 rounded bg-slate-50 border border-slate-200">
+                            <span>7. Activity Heatmap</span>
+                            <kbd class="px-2 py-0.5 rounded bg-white border border-slate-300 font-mono font-bold shadow-sm">7</kbd>
+                        </div>
+                        <div class="flex justify-between items-center p-2 rounded bg-slate-50 border border-slate-200">
+                            <span>8. Downtime Matrix</span>
+                            <kbd class="px-2 py-0.5 rounded bg-white border border-slate-300 font-mono font-bold shadow-sm">8</kbd>
+                        </div>
+                        <div class="flex justify-between items-center p-2 rounded bg-slate-50 border border-slate-200 col-span-2">
+                            <span>9. Master Asset Register</span>
+                            <kbd class="px-2 py-0.5 rounded bg-white border border-slate-300 font-mono font-bold shadow-sm">9</kbd>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-3 bg-slate-50 border-t border-slate-200 flex justify-end">
+                <button onclick="toggleShortcutsModal()" class="px-4 py-1.5 rounded-lg bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition cursor-pointer">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- TOAST NOTIFICATION STACK -->
     <div id="toastStack"></div>
 </body>
