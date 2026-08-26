@@ -3581,12 +3581,24 @@ Click any bar to filter table`;
             if (maintEntries.length === 0) {
                 maintBody.innerHTML = '<tr><td colspan="3" class="p-3 text-center text-slate-400 italic text-[11px]">No maintenance workshop records found for this asset in this period.</td></tr>';
             } else {
-                maintEntries.forEach(([d, info]) => {
+                maintEntries.forEach(([d, infoStr]) => {
+                    let jobTitle = 'Workshop Service';
+                    let catTitle = 'General';
+                    const str = String(infoStr || '');
+                    const m = str.match(/\((.*?)\)/);
+                    if (m && m[1]) {
+                        const parts = m[1].split(' - ');
+                        jobTitle = parts[0] ? parts[0].trim() : 'Workshop Service';
+                        catTitle = parts[1] ? parts[1].trim() : 'General Maintenance';
+                    } else if (str) {
+                        jobTitle = str;
+                    }
+
                     const tr = document.createElement('tr');
                     tr.className = 'hover:bg-slate-50 text-[11px]';
                     tr.innerHTML = `
                         <td class="p-1.5 font-mono text-slate-600 font-bold">${d}</td>
-                        <td class="p-1.5 font-bold text-slate-800">${info.job || 'Workshop Service'} <span class="text-slate-500 font-normal">(${info.category || 'General'})</span></td>
+                        <td class="p-1.5 font-bold text-slate-800">${jobTitle} <span class="text-slate-500 font-normal">(${catTitle})</span></td>
                         <td class="p-1.5 text-right"><span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-800">Workshop Order</span></td>
                     `;
                     maintBody.appendChild(tr);
