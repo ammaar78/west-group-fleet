@@ -2603,7 +2603,7 @@ Click any bar to filter table`;
                         </div>
                         <div class="grid grid-cols-3 gap-1.5 text-center text-xs font-mono">
                             <div class="bg-slate-50 p-1.5 rounded border border-slate-100">
-                                <span class="text-[9px] font-bold text-slate-400 block uppercase">Tableau Achv%</span>
+                                <span class="text-[9px] font-bold text-slate-400 block uppercase">KPI Achv %</span>
                                 <span class="font-black text-xs text-emerald-700">${rawMetrics.achvShort}</span>
                             </div>
                             <div class="bg-slate-50 p-1.5 rounded border border-slate-100">
@@ -2642,7 +2642,7 @@ Click any bar to filter table`;
             }
 
             const radarLabels = [
-                '🎯 Tableau Achv %',
+                '🎯 KPI Achievement %',
                 '📅 Working Days / Truck',
                 '⏳ Dispatch Readiness',
                 '🔧 Fleet Health (Low Dwell)',
@@ -2697,7 +2697,7 @@ Click any bar to filter table`;
                                     const metricIdx = context.dataIndex;
                                     const raw = ds.rawMetrics || {};
                                     let rawStr = '';
-                                    if (metricIdx === 0) rawStr = ` (Tableau Achv%: ${raw.achvShort} | Perf%: ${raw.perfShort} | ${raw.kpiPassed} passed target)`;
+                                    if (metricIdx === 0) rawStr = ` (KPI Achv%: ${raw.achvShort} | Perf%: ${raw.perfShort} | ${raw.kpiPassed} passed target)`;
                                     else if (metricIdx === 1) rawStr = ` (Actual: ${raw.workDays})`;
                                     else if (metricIdx === 2) rawStr = ` (Idle: ${raw.idleDays})`;
                                     else if (metricIdx === 3) rawStr = ` (Dwell: ${raw.maintDays})`;
