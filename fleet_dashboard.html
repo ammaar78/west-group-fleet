@@ -3572,10 +3572,10 @@ Click any bar to filter table`;
             document.getElementById('passportKpiTargetPct').innerText = `${kpiPct}%`;
             document.getElementById('passportKpiTargetStatus').innerText = (kpiPct >= 100) ? 'Achieved Target' : `${Math.max(0, targetTrips - mtdTrips)} Trips Remaining`;
 
-            // Maintenance History Log Table
+            // Maintenance History Log Table (Sorted Newest Date First)
             const maintBody = document.getElementById('passportMaintBody');
             maintBody.innerHTML = '';
-            const maintEntries = maintDateMap[stdPlate] ? Object.entries(maintDateMap[stdPlate]) : [];
+            const maintEntries = maintDateMap[stdPlate] ? Object.entries(maintDateMap[stdPlate]).sort((a, b) => b[0].localeCompare(a[0])) : [];
             document.getElementById('passportMaintOrderCount').innerText = `${maintEntries.length} Records`;
 
             if (maintEntries.length === 0) {
@@ -3585,7 +3585,7 @@ Click any bar to filter table`;
                     const tr = document.createElement('tr');
                     tr.className = 'hover:bg-slate-50 text-[11px]';
                     tr.innerHTML = `
-                        <td class="p-1.5 font-mono text-slate-600">${d}</td>
+                        <td class="p-1.5 font-mono text-slate-600 font-bold">${d}</td>
                         <td class="p-1.5 font-bold text-slate-800">${info.job || 'Workshop Service'} <span class="text-slate-500 font-normal">(${info.category || 'General'})</span></td>
                         <td class="p-1.5 text-right"><span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-800">Workshop Order</span></td>
                     `;
@@ -3593,10 +3593,10 @@ Click any bar to filter table`;
                 });
             }
 
-            // Recent Manifest Table
+            // Recent Manifest Table (Sorted Newest Date First)
             const tripBody = document.getElementById('passportTripBody');
             tripBody.innerHTML = '';
-            const manifests = truckManifestMap[stdPlate] || [];
+            const manifests = (truckManifestMap[stdPlate] || []).slice().sort((a, b) => b.date.localeCompare(a.date));
             if (manifests.length === 0) {
                 tripBody.innerHTML = '<tr><td colspan="4" class="p-3 text-center text-slate-400 italic text-[11px]">No recent trip records logged in dataset.</td></tr>';
             } else {
@@ -3604,7 +3604,7 @@ Click any bar to filter table`;
                     const tr = document.createElement('tr');
                     tr.className = 'hover:bg-slate-50 text-[11px]';
                     tr.innerHTML = `
-                        <td class="p-1.5 font-mono text-slate-600">${m.date}</td>
+                        <td class="p-1.5 font-mono text-slate-600 font-bold">${m.date}</td>
                         <td class="p-1.5 font-semibold text-slate-800 truncate max-w-[140px]" title="${m.route}">${m.route}</td>
                         <td class="p-1.5 text-slate-600 font-mono">${m.container} <span class="text-[9px] text-slate-400">(${m.size})</span></td>
                         <td class="p-1.5 text-right font-bold text-emerald-700">+${m.trips}</td>
