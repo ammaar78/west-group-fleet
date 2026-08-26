@@ -1420,27 +1420,30 @@
             currentProcessedData = rawData.map(truck => {
                 let tripCount = 0;
                 let totalPerTrip = 0;
-                let maintHoursRaw = 0;
+                let maintDaysCount = 0;
                 let lastActiveDate = '-';
 
                 targetDates.forEach(dStr => {
                     const c = (dailyTripsMap[truck.StdPlate] && dailyTripsMap[truck.StdPlate][dStr]) ? dailyTripsMap[truck.StdPlate][dStr] : 0;
                     const pt = (dailyPerTripMap[truck.StdPlate] && dailyPerTripMap[truck.StdPlate][dStr]) ? dailyPerTripMap[truck.StdPlate][dStr] : 0;
-                    const m = (dailyMaintMap[truck.StdPlate] && dailyMaintMap[truck.StdPlate][dStr]) ? dailyMaintMap[truck.StdPlate][dStr] : 0;
+                    
+                    // Count actual maintenance days from maintDateMap (authoritative source)
+                    if (maintDateMap && maintDateMap[truck.StdPlate] && maintDateMap[truck.StdPlate][dStr]) {
+                        maintDaysCount++;
+                    }
                     
                     tripCount += c;
                     totalPerTrip += pt;
-                    maintHoursRaw += m;
 
                     if (c > 0 && lastActiveDate === '-') lastActiveDate = dStr;
                 });
 
-                // Tableau Exact Mathematical Model:
-                // Maintenance Days = Maintenance Hours / 2400.0
+                // Corrected Mathematical Model:
+                // Maintenance Days = count of days with Has_Maintenance flag in maintDateMap
                 // Working Days = max(0.1, Calendar Days - Maintenance Days)
                 // % Achievement = (Sum PerTrip / Working Days) * 100
                 const calDays = targetDates.length;
-                const maintDaysVal = maintHoursRaw / 2400.0;
+                const maintDaysVal = maintDaysCount;
                 const workingDays = Math.max(0.1, calDays - maintDaysVal);
                 const achievementPct = (totalPerTrip / workingDays) * 100;
                 const perfPct = (totalPerTrip / calDays) * 100;
@@ -2489,7 +2492,7 @@ Click any bar to filter table`;
                     let truckWorkDays = 0;
                     let truckTrips = 0;
                     let truckPerTrip = 0;
-                    let truckMaintHours = 0;
+                    let truckMaintDaysCount = 0;
 
                     activeDates.forEach(d => {
                         if (dailyTripsMap[sp] && dailyTripsMap[sp][d]) {
@@ -2501,14 +2504,15 @@ Click any bar to filter table`;
                         if (dailyPerTripMap[sp] && dailyPerTripMap[sp][d]) {
                             truckPerTrip += dailyPerTripMap[sp][d];
                         }
-                        if (dailyMaintMap[sp] && dailyMaintMap[sp][d]) {
-                            truckMaintHours += dailyMaintMap[sp][d];
+                        // Count actual maintenance days from maintDateMap (authoritative source)
+                        if (maintDateMap && maintDateMap[sp] && maintDateMap[sp][d]) {
+                            truckMaintDaysCount++;
                         }
                     });
                     if (truckWorkDays > 0) activeWorkTruckDays += truckWorkDays;
                     totalTeamEarnedDays += truckPerTrip;
 
-                    const tMaintDays = truckMaintHours / 2400.0;
+                    const tMaintDays = truckMaintDaysCount;
                     totalMaintDowntimeDays += tMaintDays;
 
                     const tWorkingDays = Math.max(0.1, daysCount - tMaintDays);
@@ -3568,25 +3572,28 @@ Click any bar to filter table`;
                 ribbonContainer.appendChild(pill);
             });
 
-            // Exact Tableau Calculations:
+            // Corrected Maintenance Days Calculation:
             let sumPerTrip = 0;
-            let maintHours = 0;
+            let maintDaysCount = 0;
             let longTrips = 0;
 
             datesAsc.forEach(d => {
                 const dPt = (dailyPerTripMap[stdPlate] && dailyPerTripMap[stdPlate][d]) ? dailyPerTripMap[stdPlate][d] : 0;
-                const dM = (dailyMaintMap[stdPlate] && dailyMaintMap[stdPlate][d]) ? dailyMaintMap[stdPlate][d] : 0;
                 const dTr = (dailyTripsMap[stdPlate] && dailyTripsMap[stdPlate][d]) ? dailyTripsMap[stdPlate][d] : 0;
 
+                // Count actual maintenance days from maintDateMap (authoritative source)
+                if (maintDateMap && maintDateMap[stdPlate] && maintDateMap[stdPlate][d]) {
+                    maintDaysCount++;
+                }
+
                 sumPerTrip += dPt;
-                maintHours += dM;
                 if (dPt > 1.0) {
                     longTrips += dTr;
                 }
             });
 
             const calDays = daysInMonth;
-            const maintDaysVal = maintHours / 2400.0;
+            const maintDaysVal = maintDaysCount;
             const workingDays = Math.max(0.1, calDays - maintDaysVal);
             const perfPct = (sumPerTrip / calDays) * 100;
             const achvPct = (sumPerTrip / workingDays) * 100;
