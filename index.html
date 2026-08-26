@@ -1420,29 +1420,30 @@
             currentProcessedData = rawData.map(truck => {
                 let tripCount = 0;
                 let totalPerTrip = 0;
-                let workingDays = 0;
+                let maintHoursRaw = 0;
                 let lastActiveDate = '-';
 
                 targetDates.forEach(dStr => {
                     const c = (dailyTripsMap[truck.StdPlate] && dailyTripsMap[truck.StdPlate][dStr]) ? dailyTripsMap[truck.StdPlate][dStr] : 0;
                     const pt = (dailyPerTripMap[truck.StdPlate] && dailyPerTripMap[truck.StdPlate][dStr]) ? dailyPerTripMap[truck.StdPlate][dStr] : 0;
-                    const m = (dailyMaintMap[truck.StdPlate] && dailyMaintMap[truck.StdPlate][dStr]) ? (dailyMaintMap[truck.StdPlate][dStr] / 1000.0) : 0;
+                    const m = (dailyMaintMap[truck.StdPlate] && dailyMaintMap[truck.StdPlate][dStr]) ? dailyMaintMap[truck.StdPlate][dStr] : 0;
                     
                     tripCount += c;
                     totalPerTrip += pt;
-                    
-                    let deduction = 0;
-                    if (pt < 1.0 && m > 0) {
-                        deduction = Math.min(1.0 - pt, m, 1.0);
-                    }
-                    workingDays += (1.0 - deduction);
+                    maintHoursRaw += m;
 
                     if (c > 0 && lastActiveDate === '-') lastActiveDate = dStr;
                 });
 
-                // Tableau / R Script Exact Achievement % Formula:
-                // % Achievement = (Total PerTrip Earned / Working Days) * 100
-                const achievementPct = workingDays > 0 ? (totalPerTrip / workingDays) * 100 : 0;
+                // Tableau Exact Mathematical Model:
+                // Maintenance Days = Maintenance Hours / 2400.0
+                // Working Days = max(0.1, Calendar Days - Maintenance Days)
+                // % Achievement = (Sum PerTrip / Working Days) * 100
+                const calDays = targetDates.length;
+                const maintDaysVal = maintHoursRaw / 2400.0;
+                const workingDays = Math.max(0.1, calDays - maintDaysVal);
+                const achievementPct = (totalPerTrip / workingDays) * 100;
+                const perfPct = (totalPerTrip / calDays) * 100;
                 const achievedKpi = (achievementPct >= 100.0);
 
                 // Implement Date-Strict Maintenance Engine
@@ -1488,6 +1489,7 @@
                     TotalPerTrip: totalPerTrip,
                     WorkingDays: workingDays,
                     AchievementPct: achievementPct,
+                    PerfPct: perfPct,
                     AchievedKpi: achievedKpi,
                     LatestTripDate: lastActiveDate !== '-' ? lastActiveDate : (truck.LatestTripDate || '-'),
                     DailyActivityStatus: actStatus,
