@@ -2552,10 +2552,9 @@ Click any bar to filter table`;
                     !String(t.DriverName).toLowerCase().includes('waiting') &&
                     !String(t.DriverName).toLowerCase().includes('unassigned')
                 ).length;
-                const driverMannedPct = (mannedTrucks / fleetSize) * 100;
-
-                // 6. Total Volume Score
-                const volumeScore = Math.min(100, (totalTrips / (fleetSize * 70.0)) * 100);
+                // 6. Total Volume Score (Dynamically scaled to active date filter window)
+                const targetVolumeInPeriod = Math.max(1, fleetSize * daysCount * 2.0);
+                const volumeScore = Math.min(100, (totalTrips / targetVolumeInPeriod) * 100);
 
                 const factorScores = [
                     Math.round(kpiScore * 10) / 10,
