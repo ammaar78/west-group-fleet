@@ -1228,7 +1228,7 @@
                     </div>
                 </div>
 
-                <!-- 4 Key Performance Metric Cards -->
+                <!-- 4 Key Performance Metric Cards (Tableau Standard) -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div class="p-3 bg-white border border-slate-200 rounded-xl text-center shadow-sm">
                         <span class="text-[9px] font-black uppercase text-slate-400 block">TOTAL TRIPS (MTD)</span>
@@ -1236,17 +1236,17 @@
                         <span class="text-[10px] text-emerald-600 font-bold" id="passportKpiAvgDaily">0.0 / day</span>
                     </div>
                     <div class="p-3 bg-white border border-slate-200 rounded-xl text-center shadow-sm">
-                        <span class="text-[9px] font-black uppercase text-slate-400 block">ACTIVE DAYS</span>
+                        <span class="text-[9px] font-black uppercase text-slate-400 block">WORKING DAYS</span>
                         <span class="text-xl font-black text-blue-700 block" id="passportKpiActiveDays">0</span>
                         <span class="text-[10px] text-slate-500 font-medium" id="passportKpiActiveRate">0% Utilization</span>
                     </div>
                     <div class="p-3 bg-white border border-slate-200 rounded-xl text-center shadow-sm">
-                        <span class="text-[9px] font-black uppercase text-slate-400 block">WORKSHOP DOWNTIME</span>
+                        <span class="text-[9px] font-black uppercase text-slate-400 block">MAINTENANCE DAYS</span>
                         <span class="text-xl font-black text-rose-700 block" id="passportKpiMaintDays">0</span>
                         <span class="text-[10px] text-rose-600 font-medium" id="passportKpiMaintTag">Clean</span>
                     </div>
                     <div class="p-3 bg-white border border-slate-200 rounded-xl text-center shadow-sm">
-                        <span class="text-[9px] font-black uppercase text-slate-400 block">TARGET KPI %</span>
+                        <span class="text-[9px] font-black uppercase text-slate-400 block">ACHIEVEMENT KPI %</span>
                         <span class="text-xl font-black text-indigo-700 block" id="passportKpiTargetPct">0.0%</span>
                         <span class="text-[10px] text-slate-500 font-medium" id="passportKpiTargetStatus">On Track</span>
                     </div>
@@ -2433,7 +2433,7 @@ Click any bar to filter table`;
         }
 
         // =========================================================================
-        // SUPERVISOR 6-FACTOR OPERATIONAL BENCHMARK RADAR
+        // SUPERVISOR 6-FACTOR OPERATIONAL BENCHMARK RADAR (EXACT TABLEAU FORMULAS)
         // =========================================================================
         let chartSupervisorRadarInstance = null;
         let radarDatasetVisibility = [true, true, true];
@@ -2470,20 +2470,23 @@ Click any bar to filter table`;
                 const fleetSize = Math.max(1, group.length);
                 const style = palette[idx % palette.length];
 
-                // 1. Total Trips and Days in active period
                 let totalTrips = 0;
                 let activeWorkTruckDays = 0;
-                let maintTruckDays = 0;
+                let totalMaintDowntimeDays = 0;
 
-                // 2. Individual Truck KPI Calculation (Method B: Average of Individual Truck KPIs)
-                const truckTarget = Math.max(1, daysCount * 2.0);
-                let sumIndividualKpiPct = 0;
+                // Exact Tableau Individual Truck KPI Calculation:
+                // % Achievement = (Sum PerTrip / Working Days) * 100
+                // Perf% = (Sum PerTrip / Calendar Days) * 100
+                let sumIndividualAchvPct = 0;
+                let sumIndividualPerfPct = 0;
                 let achievedTrucksCount = 0;
 
                 group.forEach(t => {
                     const sp = t.StdPlate;
                     let truckWorkDays = 0;
                     let truckTrips = 0;
+                    let truckPerTrip = 0;
+                    let truckMaintHours = 0;
 
                     activeDates.forEach(d => {
                         if (dailyTripsMap[sp] && dailyTripsMap[sp][d]) {
@@ -2492,41 +2495,52 @@ Click any bar to filter table`;
                             truckTrips += tripsOnDay;
                             truckWorkDays++;
                         }
-                        if (maintDateMap[sp] && maintDateMap[sp][d]) {
-                            maintTruckDays++;
+                        if (dailyPerTripMap[sp] && dailyPerTripMap[sp][d]) {
+                            truckPerTrip += dailyPerTripMap[sp][d];
+                        }
+                        if (dailyMaintMap[sp] && dailyMaintMap[sp][d]) {
+                            truckMaintHours += dailyMaintMap[sp][d];
                         }
                     });
                     if (truckWorkDays > 0) activeWorkTruckDays += truckWorkDays;
 
-                    const indKpiPct = (truckTrips / truckTarget) * 100;
-                    sumIndividualKpiPct += indKpiPct;
-                    if (indKpiPct >= 100) {
+                    const tMaintDays = truckMaintHours / 2400.0;
+                    totalMaintDowntimeDays += tMaintDays;
+
+                    const tWorkingDays = Math.max(0.1, daysCount - tMaintDays);
+                    const tAchvPct = (truckPerTrip / tWorkingDays) * 100;
+                    const tPerfPct = (truckPerTrip / daysCount) * 100;
+
+                    sumIndividualAchvPct += tAchvPct;
+                    sumIndividualPerfPct += tPerfPct;
+                    if (tAchvPct >= 100.0) {
                         achievedTrucksCount++;
                     }
                 });
 
-                // Method B Mean Individual KPI
-                const avgIndividualKpiPct = sumIndividualKpiPct / fleetSize;
-                const kpiScore = Math.min(100, avgIndividualKpiPct);
+                // Exact Tableau Mean Achievement % across Supervisor Fleet
+                const avgIndividualAchvPct = sumIndividualAchvPct / fleetSize;
+                const avgIndividualPerfPct = sumIndividualPerfPct / fleetSize;
+                const kpiScore = Math.min(100, avgIndividualAchvPct);
                 const passedRatePct = ((achievedTrucksCount / fleetSize) * 100).toFixed(1);
 
-                // 3. Working Days / Truck
+                // 2. Working Days / Truck
                 const avgWorkDays = (activeWorkTruckDays / fleetSize);
                 const workDaysScore = Math.min(100, (avgWorkDays / daysCount) * 100);
 
-                // 4. Road-Ready Idle Days (Lower is Better -> Invert to Readiness Score)
+                // 3. Road-Ready Idle Days (Invert to Readiness Score)
                 const totalPossibleTruckDays = fleetSize * daysCount;
-                const totalIdleDays = Math.max(0, totalPossibleTruckDays - activeWorkTruckDays - maintTruckDays);
+                const totalIdleDays = Math.max(0, totalPossibleTruckDays - activeWorkTruckDays - totalMaintDowntimeDays);
                 const avgIdleDaysPerTruck = (totalIdleDays / fleetSize);
                 const idleRate = (avgIdleDaysPerTruck / daysCount);
                 const readinessScore = Math.max(0, Math.min(100, (1 - idleRate) * 100));
 
-                // 5. Maintenance Dwell Days (Lower is Better -> Invert to Health Score)
-                const avgMaintDaysPerTruck = (maintTruckDays / fleetSize);
+                // 4. Maintenance Dwell Days (Invert to Health Score)
+                const avgMaintDaysPerTruck = (totalMaintDowntimeDays / fleetSize);
                 const maintRate = (avgMaintDaysPerTruck / daysCount);
                 const healthScore = Math.max(0, Math.min(100, (1 - maintRate) * 100));
 
-                // 6. Driver Assignment Rate %
+                // 5. Driver Assignment Rate %
                 const mannedTrucks = group.filter(t => 
                     !String(t.OfficialStatus).toLowerCase().includes('accident') &&
                     !String(t.OfficialStatus).toLowerCase().includes('exit') &&
@@ -2536,7 +2550,7 @@ Click any bar to filter table`;
                 ).length;
                 const driverMannedPct = (mannedTrucks / fleetSize) * 100;
 
-                // 7. Total Volume Score
+                // 6. Total Volume Score
                 const volumeScore = Math.min(100, (totalTrips / (fleetSize * 70.0)) * 100);
 
                 const factorScores = [
@@ -2549,12 +2563,13 @@ Click any bar to filter table`;
                 ];
 
                 const rawMetrics = {
-                    kpiFull: avgIndividualKpiPct.toFixed(1) + '% (Avg / ' + achievedTrucksCount + ' passed)',
-                    kpiShort: avgIndividualKpiPct.toFixed(1) + '%',
+                    achvFull: avgIndividualAchvPct.toFixed(2) + '% (Tableau Achievement)',
+                    achvShort: avgIndividualAchvPct.toFixed(2) + '%',
+                    perfShort: avgIndividualPerfPct.toFixed(2) + '%',
                     kpiPassed: achievedTrucksCount + '/' + fleetSize + ' (' + passedRatePct + '%)',
                     workDays: avgWorkDays.toFixed(1) + ' d/trk',
                     idleDays: avgIdleDaysPerTruck.toFixed(1) + ' d/trk',
-                    maintDays: maintTruckDays + ' days (' + avgMaintDaysPerTruck.toFixed(1) + ' d/trk)',
+                    maintDays: totalMaintDowntimeDays.toFixed(2) + ' days (' + avgMaintDaysPerTruck.toFixed(2) + ' d/trk)',
                     driverRate: driverMannedPct.toFixed(1) + '% (' + mannedTrucks + '/' + fleetSize + ')',
                     totalTrips: totalTrips.toLocaleString() + ' trips'
                 };
@@ -2586,8 +2601,8 @@ Click any bar to filter table`;
                         </div>
                         <div class="grid grid-cols-3 gap-1.5 text-center text-xs font-mono">
                             <div class="bg-slate-50 p-1.5 rounded border border-slate-100">
-                                <span class="text-[9px] font-bold text-slate-400 block uppercase">Avg Truck KPI</span>
-                                <span class="font-black text-xs text-emerald-700">${rawMetrics.kpiShort}</span>
+                                <span class="text-[9px] font-bold text-slate-400 block uppercase">Tableau Achv%</span>
+                                <span class="font-black text-xs text-emerald-700">${rawMetrics.achvShort}</span>
                             </div>
                             <div class="bg-slate-50 p-1.5 rounded border border-slate-100">
                                 <span class="text-[9px] font-bold text-slate-400 block uppercase">Work Days</span>
@@ -2603,7 +2618,7 @@ Click any bar to filter table`;
                             </div>
                             <div class="bg-slate-50 p-1.5 rounded border border-slate-100">
                                 <span class="text-[9px] font-bold text-slate-400 block uppercase">Maint Dwell</span>
-                                <span class="font-black text-xs text-rose-700">${maintTruckDays} d</span>
+                                <span class="font-black text-xs text-rose-700">${totalMaintDowntimeDays.toFixed(1)} d</span>
                             </div>
                             <div class="bg-slate-50 p-1.5 rounded border border-slate-100">
                                 <span class="text-[9px] font-bold text-slate-400 block uppercase">Passed >=100%</span>
@@ -2625,7 +2640,7 @@ Click any bar to filter table`;
             }
 
             const radarLabels = [
-                '🎯 Avg Truck KPI %',
+                '🎯 Tableau Achv %',
                 '📅 Working Days / Truck',
                 '⏳ Dispatch Readiness',
                 '🔧 Fleet Health (Low Dwell)',
@@ -2680,7 +2695,7 @@ Click any bar to filter table`;
                                     const metricIdx = context.dataIndex;
                                     const raw = ds.rawMetrics || {};
                                     let rawStr = '';
-                                    if (metricIdx === 0) rawStr = ` (Avg: ${raw.kpiShort} | ${raw.kpiPassed} passed target)`;
+                                    if (metricIdx === 0) rawStr = ` (Tableau Achv%: ${raw.achvShort} | Perf%: ${raw.perfShort} | ${raw.kpiPassed} passed target)`;
                                     else if (metricIdx === 1) rawStr = ` (Actual: ${raw.workDays})`;
                                     else if (metricIdx === 2) rawStr = ` (Idle: ${raw.idleDays})`;
                                     else if (metricIdx === 3) rawStr = ` (Dwell: ${raw.maintDays})`;
@@ -3555,22 +3570,42 @@ Click any bar to filter table`;
                 ribbonContainer.appendChild(pill);
             });
 
-            // 4 KPI Scorecards
+            // Exact Tableau Calculations:
+            let sumPerTrip = 0;
+            let maintHours = 0;
+            let longTrips = 0;
+
+            datesAsc.forEach(d => {
+                const dPt = (dailyPerTripMap[stdPlate] && dailyPerTripMap[stdPlate][d]) ? dailyPerTripMap[stdPlate][d] : 0;
+                const dM = (dailyMaintMap[stdPlate] && dailyMaintMap[stdPlate][d]) ? dailyMaintMap[stdPlate][d] : 0;
+                const dTr = (dailyTripsMap[stdPlate] && dailyTripsMap[stdPlate][d]) ? dailyTripsMap[stdPlate][d] : 0;
+
+                sumPerTrip += dPt;
+                maintHours += dM;
+                if (dPt > 1.0) {
+                    longTrips += dTr;
+                }
+            });
+
+            const calDays = daysInMonth;
+            const maintDaysVal = maintHours / 2400.0;
+            const workingDays = Math.max(0.1, calDays - maintDaysVal);
+            const perfPct = (sumPerTrip / calDays) * 100;
+            const achvPct = (sumPerTrip / workingDays) * 100;
+            const maintRatePct = calDays > 0 ? ((maintDaysVal / calDays) * 100).toFixed(2) : '0.00';
+
+            // 4 KPI Scorecards (Exact Tableau Metric Match)
             document.getElementById('passportKpiTrips').innerText = mtdTrips;
-            const avgDaily = activeDaysCount > 0 ? (mtdTrips / activeDaysCount).toFixed(1) : '0.0';
-            document.getElementById('passportKpiAvgDaily').innerText = `${avgDaily} trips / active day`;
+            document.getElementById('passportKpiAvgDaily').innerText = `${longTrips} Long Trips | ${mtdTrips - longTrips} Local`;
 
-            document.getElementById('passportKpiActiveDays').innerText = activeDaysCount;
-            const utilRate = daysInMonth > 0 ? ((activeDaysCount / daysInMonth) * 100).toFixed(1) : '0.0';
-            document.getElementById('passportKpiActiveRate').innerText = `${utilRate}% Month Utilization`;
+            document.getElementById('passportKpiActiveDays').innerText = workingDays.toFixed(2);
+            document.getElementById('passportKpiActiveRate').innerText = `${calDays}.00 Cal Days (${activeDaysCount} Active)`;
 
-            document.getElementById('passportKpiMaintDays').innerText = maintDaysCount;
-            document.getElementById('passportKpiMaintTag').innerText = maintDaysCount > 0 ? `${maintDaysCount} Workshop Days` : 'Clean (0 Days)';
+            document.getElementById('passportKpiMaintDays').innerText = maintDaysVal.toFixed(2);
+            document.getElementById('passportKpiMaintTag').innerText = maintDaysVal > 0 ? `${maintRatePct}% Downtime Rate` : 'Clean (0.00 Days)';
 
-            const targetTrips = Math.max(1, daysInMonth * 2);
-            const kpiPct = ((mtdTrips / targetTrips) * 100).toFixed(1);
-            document.getElementById('passportKpiTargetPct').innerText = `${kpiPct}%`;
-            document.getElementById('passportKpiTargetStatus').innerText = (kpiPct >= 100) ? 'Achieved Target' : `${Math.max(0, targetTrips - mtdTrips)} Trips Remaining`;
+            document.getElementById('passportKpiTargetPct').innerText = `${achvPct.toFixed(2)}%`;
+            document.getElementById('passportKpiTargetStatus').innerText = `Perf%: ${perfPct.toFixed(2)}% | ${sumPerTrip.toFixed(1)} Earned Days`;
 
             // Maintenance History Log Table (Sorted Newest Date First)
             const maintBody = document.getElementById('passportMaintBody');
