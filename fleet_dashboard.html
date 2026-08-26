@@ -3130,13 +3130,17 @@ Click any bar to filter table`;
                 // 1. Must have an assigned active driver
                 if (isDriverUnassigned(drv)) return;
 
-                // 2. Must NOT be in maintenance on the reference snapshot date
+                // 2. Must NOT be currently in maintenance on the reference date
                 const isCurrentlyInMaint = (maintDateMap && maintDateMap[sp] && maintDateMap[sp][latestRefDate]);
                 if (isCurrentlyInMaint) return;
 
-                // 3. Must have 0 trips on the reference snapshot date (currently idle)
-                const todayTrips = (dailyTripsMap && dailyTripsMap[sp] && dailyTripsMap[sp][latestRefDate]) ? dailyTripsMap[sp][latestRefDate] : 0;
-                if (todayTrips > 0) return;
+                // 3. Must have 0 trips across the selected period
+                let periodTrips = 0;
+                targetDates.forEach(dStr => {
+                    const c = (dailyTripsMap[sp] && dailyTripsMap[sp][dStr]) ? dailyTripsMap[sp][dStr] : 0;
+                    periodTrips += c;
+                });
+                if (periodTrips > 0) return;
 
                 // 4. Calculate consecutive idle dwell days backwards from latestRefDate
                 let consecutiveIdle = 0;
@@ -3152,7 +3156,6 @@ Click any bar to filter table`;
                         break;
                     }
                 }
-                if (consecutiveIdle === 0) return;
 
                 supCounts[sup] = (supCounts[sup] || 0) + 1;
                 dispatchGapTrucks.push({
