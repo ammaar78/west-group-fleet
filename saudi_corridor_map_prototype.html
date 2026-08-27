@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WEST GROUP | Interactive Saudi Route Corridor & Flow Map</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b1329;
+            color: #f1f5f9;
+        }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Animated Glowing Flow Lines */
+        @keyframes flowDash {
+            to { stroke-dashoffset: -40; }
+        }
+        .flow-line {
+            stroke-dasharray: 6, 6;
+            animation: flowDash 1.2s linear infinite;
+        }
+        .flow-line-reverse {
+            stroke-dasharray: 6, 6;
+            animation: flowDash 1.2s linear infinite reverse;
+        }
+        .flow-line-slow {
+            stroke-dasharray: 8, 8;
+            animation: flowDash 2.4s linear infinite;
+        }
+
+        /* Pulsing Radar Hubs */
+        @keyframes pulseRing {
+            0% { transform: scale(0.95); opacity: 0.9; }
+            50% { transform: scale(1.4); opacity: 0.3; }
+            100% { transform: scale(1.8); opacity: 0; }
+        }
+        .pulse-hub {
+            transform-origin: center;
+            animation: pulseRing 2.2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+
+        /* Glassmorphism Card */
+        .glass-card {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(51, 65, 85, 0.6);
+            box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.5);
+        }
+        .glass-card-accent {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="h-full flex flex-col antialiased select-none overflow-hidden">
+
+    <!-- TOP HEADER -->
+    <header class="bg-slate-900/90 border-b border-slate-800 px-6 py-3 shrink-0 flex flex-wrap items-center justify-between gap-4 z-30 backdrop-blur-md">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-black text-base shadow-sm">
+                🗺️
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm font-black text-amber-400 tracking-wider">WEST GROUP</span>
+                    <span class="text-slate-600">|</span>
+                    <h1 class="text-sm font-bold text-white tracking-tight">Interactive Saudi Route Corridor & Flow Map</h1>
+                </div>
+                <p class="text-[11px] text-slate-400 font-medium">Live Kingdom Logistics Mesh • Western Province ↔ Eastern Province ↔ Central Corridors</p>
+            </div>
+        </div>
+
+        <!-- Global Filters Bar -->
+        <div class="flex items-center gap-2.5 text-xs font-semibold">
+            <!-- Transporter Toggle -->
+            <div class="bg-slate-950 border border-slate-800 rounded-lg p-1 flex items-center gap-1">
+                <button onclick="setFleetFilter('ALL')" id="btnFleetAll" class="px-2.5 py-1 rounded text-[11px] font-bold bg-blue-600 text-white transition">All Dispatches (32,216)</button>
+                <button onclick="setFleetFilter('WEST')" id="btnFleetWest" class="px-2.5 py-1 rounded text-[11px] font-bold text-slate-400 hover:text-white transition">West Group (20,187)</button>
+                <button onclick="setFleetFilter('THIRD')" id="btnFleetThird" class="px-2.5 py-1 rounded text-[11px] font-bold text-slate-400 hover:text-white transition">Subcontractors (12,029)</button>
+            </div>
+
+            <!-- Corridor Filter Dropdown -->
+            <select id="corridorFilter" onchange="applyCorridorFilter()" class="bg-slate-950 border border-slate-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg focus:outline-none cursor-pointer">
+                <option value="ALL">All Logistics Corridors (All Routes)</option>
+                <option value="WEST_COAST">Western Province Corridor (Jeddah ↔ Yanbu ↔ Rabigh)</option>
+                <option value="CROSS_COUNTRY">Trans-Arabian Cross-Country (Jeddah ↔ Jubail / Dammam)</option>
+                <option value="EASTERN_LOCAL">Eastern Province Intra-Hub (Jubail ↔ Dammam ↔ Hasa)</option>
+                <option value="CENTRAL">Central & Northern Axis (Jubail ↔ Riyadh / Ar Ar)</option>
+            </select>
+        </div>
+    </header>
+
+    <!-- MAIN BODY GRID -->
+    <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden relative">
+
+        <!-- LEFT/CENTER: MAP CANVAS (8 cols) -->
+        <div class="lg:col-span-8 bg-[#090f20] relative flex flex-col items-center justify-center p-4 overflow-hidden border-r border-slate-800">
+            
+            <!-- Map Legend Strip -->
+            <div class="absolute top-4 left-4 z-20 flex flex-wrap items-center gap-3 bg-slate-900/80 backdrop-blur-md border border-slate-800 px-3.5 py-2 rounded-xl text-xs font-semibold shadow-lg">
+                <div class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-emerald-500/30"></span>
+                    <span class="text-slate-300 text-[11px]">Western Hubs (Jeddah / Yanbu)</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded-full bg-blue-500 ring-2 ring-blue-500/30"></span>
+                    <span class="text-slate-300 text-[11px]">Eastern Hubs (Jubail / Dammam)</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded-full bg-amber-500 ring-2 ring-amber-500/30"></span>
+                    <span class="text-slate-300 text-[11px]">Central & North (Riyadh / Ar Ar)</span>
+                </div>
+                <div class="flex items-center gap-1.5 pl-2 border-l border-slate-700">
+                    <span class="w-3.5 h-1 rounded bg-gradient-to-r from-emerald-400 to-blue-400 inline-block"></span>
+                    <span class="text-slate-400 text-[11px]">Animated Cargo Flow</span>
+                </div>
+            </div>
+
+            <!-- Map Viewport SVG -->
+            <svg id="saudiMapSvg" viewBox="0 0 1000 680" class="w-full h-full max-h-[660px] object-contain drop-shadow-2xl">
+                <defs>
+                    <!-- Flow Gradients -->
+                    <linearGradient id="gradCrossCountry" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#10b981" />
+                        <stop offset="50%" stop-color="#38bdf8" />
+                        <stop offset="100%" stop-color="#3b82f6" />
+                    </linearGradient>
+                    <linearGradient id="gradWestCoast" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#f59e0b" />
+                        <stop offset="50%" stop-color="#10b981" />
+                        <stop offset="100%" stop-color="#06b6d4" />
+                    </linearGradient>
+                    <linearGradient id="gradCentral" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#3b82f6" />
+                        <stop offset="100%" stop-color="#f59e0b" />
+                    </linearGradient>
+
+                    <!-- Glow Filter -->
+                    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="4" result="blur" />
+                        <feMerge>
+                            <feMergeNode in="blur" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                </defs>
+
+                <!-- Saudi Landmass Geometry Silhouette -->
+                <path d="M 220 120 L 380 90 L 520 130 L 680 180 L 820 220 L 890 280 L 870 380 L 780 440 L 720 540 L 580 580 L 460 550 L 320 460 L 220 340 L 160 210 Z" 
+                      fill="#0e172e" stroke="#1e293b" stroke-width="2.5" />
+
+                <!-- Red Sea Coastline Line -->
+                <path d="M 160 200 Q 230 330 310 470" fill="none" stroke="#0284c7" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.4" />
+                <!-- Arabian Gulf Coastline Line -->
+                <path d="M 800 200 Q 860 270 880 340" fill="none" stroke="#0284c7" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.4" />
+
+                <!-- ========================================================= -->
+                <!-- CORRIDOR FLOW PATHS -->
+                <!-- ========================================================= -->
+                <g id="corridorLinesGroup">
+                    <!-- 1. Trans-Arabian Cross-Country: Jubail <-> Jeddah (1,450 km) -->
+                    <path id="pathJubailJeddah" d="M 810 220 Q 520 280 250 380" fill="none" stroke="#10b981" stroke-width="4.5" opacity="0.85" class="flow-line cursor-pointer" onclick="selectRoute('AL JUBAIL', 'JEDDAH')" />
+                    <path d="M 810 220 Q 520 280 250 380" fill="none" stroke="#38bdf8" stroke-width="1.5" opacity="0.4" />
+
+                    <!-- 2. Western Express: Yanbu <-> Jeddah (350 km) -->
+                    <path id="pathYanbuJeddah" d="M 210 260 Q 225 320 250 380" fill="none" stroke="#06b6d4" stroke-width="6.5" opacity="0.9" class="flow-line cursor-pointer" onclick="selectRoute('YANBU', 'JEDDAH')" />
+
+                    <!-- 3. Yanbu <-> Rabigh <-> Jeddah -->
+                    <path id="pathYanbuRabigh" d="M 210 260 L 230 320" fill="none" stroke="#f59e0b" stroke-width="3.5" opacity="0.85" class="flow-line cursor-pointer" onclick="selectRoute('YANBU', 'RABIGH')" />
+                    <path id="pathRabighJeddah" d="M 230 320 L 250 380" fill="none" stroke="#f59e0b" stroke-width="2.5" opacity="0.75" class="flow-line cursor-pointer" onclick="selectRoute('RABIGH', 'JEDDAH')" />
+
+                    <!-- 4. Eastern Intra-Hub: Jubail <-> Dammam (90 km) -->
+                    <path id="pathJubailDammam" d="M 810 220 L 830 255" fill="none" stroke="#3b82f6" stroke-width="4.0" opacity="0.9" class="flow-line cursor-pointer" onclick="selectRoute('AL JUBAIL', 'DAMMAM')" />
+
+                    <!-- 5. Dammam <-> Al Hasa (140 km) -->
+                    <path id="pathDammamHasa" d="M 830 255 L 815 310" fill="none" stroke="#3b82f6" stroke-width="2.5" opacity="0.75" class="flow-line cursor-pointer" onclick="selectRoute('AL JUBAIL', 'AL HASA')" />
+
+                    <!-- 6. Jubail <-> Riyadh (480 km) -->
+                    <path id="pathJubailRiyadh" d="M 810 220 Q 700 290 590 320" fill="none" stroke="#f59e0b" stroke-width="2.5" opacity="0.75" class="flow-line cursor-pointer" onclick="selectRoute('AL JUBAIL', 'RIYADH')" />
+
+                    <!-- 7. Jubail <-> Yanbu Direct (1,380 km) -->
+                    <path id="pathJubailYanbu" d="M 810 220 Q 510 200 210 260" fill="none" stroke="#ec4899" stroke-width="2.0" opacity="0.65" class="flow-line cursor-pointer" onclick="selectRoute('AL JUBAIL', 'YANBU')" />
+
+                    <!-- 8. Jubail <-> Ar Ar (Northern Border 980 km) -->
+                    <path id="pathJubailArAr" d="M 810 220 Q 550 140 340 90" fill="none" stroke="#a855f7" stroke-width="2.0" opacity="0.65" class="flow-line cursor-pointer" onclick="selectRoute('AL JUBAIL', 'AR AR')" />
+                </g>
+
+                <!-- ========================================================= -->
+                <!-- LOGISTICS HUBS (NODES) -->
+                <!-- ========================================================= -->
+                <g id="hubsGroup">
+                    <!-- 1. JEDDAH HUB -->
+                    <g transform="translate(250, 380)" class="cursor-pointer group" onclick="selectHub('JEDDAH')">
+                        <circle r="22" fill="#10b981" opacity="0.2" class="pulse-hub" />
+                        <circle r="14" fill="#0f172a" stroke="#10b981" stroke-width="3" filter="url(#glow)" />
+                        <circle r="6" fill="#10b981" />
+                        <text x="22" y="5" fill="#ffffff" font-size="13" font-weight="800" font-family="Inter">JEDDAH</text>
+                        <text x="22" y="20" fill="#94a3b8" font-size="10" font-weight="600">8,297 Trips • Port & Terminals</text>
+                    </g>
+
+                    <!-- 2. YANBU HUB -->
+                    <g transform="translate(210, 260)" class="cursor-pointer group" onclick="selectHub('YANBU')">
+                        <circle r="20" fill="#06b6d4" opacity="0.2" class="pulse-hub" />
+                        <circle r="12" fill="#0f172a" stroke="#06b6d4" stroke-width="3" filter="url(#glow)" />
+                        <circle r="5" fill="#06b6d4" />
+                        <text x="-95" y="4" fill="#ffffff" font-size="13" font-weight="800" font-family="Inter">YANBU</text>
+                        <text x="-135" y="19" fill="#94a3b8" font-size="10" font-weight="600">5,990 Trips • Industrial Port</text>
+                    </g>
+
+                    <!-- 3. RABIGH HUB -->
+                    <g transform="translate(230, 320)" class="cursor-pointer group" onclick="selectHub('RABIGH')">
+                        <circle r="12" fill="#f59e0b" opacity="0.2" class="pulse-hub" />
+                        <circle r="8" fill="#0f172a" stroke="#f59e0b" stroke-width="2.5" />
+                        <circle r="3.5" fill="#f59e0b" />
+                        <text x="-65" y="4" fill="#ffffff" font-size="11" font-weight="700">RABIGH</text>
+                    </g>
+
+                    <!-- 4. AL JUBAIL HUB -->
+                    <g transform="translate(810, 220)" class="cursor-pointer group" onclick="selectHub('AL JUBAIL')">
+                        <circle r="22" fill="#3b82f6" opacity="0.2" class="pulse-hub" />
+                        <circle r="14" fill="#0f172a" stroke="#3b82f6" stroke-width="3" filter="url(#glow)" />
+                        <circle r="6" fill="#3b82f6" />
+                        <text x="-95" y="-12" fill="#ffffff" font-size="13" font-weight="800" font-family="Inter">AL JUBAIL</text>
+                        <text x="-140" y="3" fill="#94a3b8" font-size="10" font-weight="600">4,728 Trips • Petrochem Hub</text>
+                    </g>
+
+                    <!-- 5. DAMMAM HUB -->
+                    <g transform="translate(830, 255)" class="cursor-pointer group" onclick="selectHub('DAMMAM')">
+                        <circle r="14" fill="#38bdf8" opacity="0.2" class="pulse-hub" />
+                        <circle r="9" fill="#0f172a" stroke="#38bdf8" stroke-width="2.5" />
+                        <circle r="4" fill="#38bdf8" />
+                        <text x="16" y="4" fill="#ffffff" font-size="11" font-weight="700">DAMMAM</text>
+                    </g>
+
+                    <!-- 6. AL HASA HUB -->
+                    <g transform="translate(815, 310)" class="cursor-pointer group" onclick="selectHub('AL HASA')">
+                        <circle r="10" fill="#64748b" opacity="0.2" />
+                        <circle r="6" fill="#0f172a" stroke="#64748b" stroke-width="2" />
+                        <circle r="2.5" fill="#94a3b8" />
+                        <text x="14" y="4" fill="#cbd5e1" font-size="10" font-weight="600">AL HASA</text>
+                    </g>
+
+                    <!-- 7. RIYADH HUB -->
+                    <g transform="translate(590, 320)" class="cursor-pointer group" onclick="selectHub('RIYADH')">
+                        <circle r="16" fill="#f59e0b" opacity="0.2" class="pulse-hub" />
+                        <circle r="10" fill="#0f172a" stroke="#f59e0b" stroke-width="2.5" />
+                        <circle r="4.5" fill="#f59e0b" />
+                        <text x="-25" y="24" fill="#ffffff" font-size="12" font-weight="800">RIYADH</text>
+                    </g>
+
+                    <!-- 8. AR AR (Northern Gateway) -->
+                    <g transform="translate(340, 90)" class="cursor-pointer group" onclick="selectHub('AR AR')">
+                        <circle r="10" fill="#a855f7" opacity="0.2" />
+                        <circle r="7" fill="#0f172a" stroke="#a855f7" stroke-width="2" />
+                        <circle r="3" fill="#a855f7" />
+                        <text x="14" y="4" fill="#e9d5ff" font-size="10" font-weight="700">AR AR (Gateway)</text>
+                    </g>
+                </g>
+            </svg>
+
+            <!-- Bottom Floating Telemetry Bar -->
+            <div class="w-full flex items-center justify-between px-4 py-2.5 mt-2 bg-slate-900/90 border border-slate-800 rounded-xl text-xs z-20 backdrop-blur-md shadow-lg">
+                <div class="flex items-center gap-4">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Active Corridors</span>
+                        <span class="text-sm font-black text-white font-mono" id="statActiveCorridors">14 Corridors</span>
+                    </div>
+                    <div class="h-6 w-px bg-slate-800"></div>
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Busiest Corridor</span>
+                        <span class="text-sm font-black text-emerald-400 font-mono">Jeddah Local (8,297 t)</span>
+                    </div>
+                    <div class="h-6 w-px bg-slate-800"></div>
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Longest Haul</span>
+                        <span class="text-sm font-black text-blue-400 font-mono">Jubail ↔ Jeddah (1,450 km)</span>
+                    </div>
+                </div>
+                <button onclick="resetMapView()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
+                    <span>↺</span> Reset Map View
+                </button>
+            </div>
+        </div>
+
+        <!-- RIGHT: LIVE CORRIDOR & HUB TELEMETRY PANEL (4 cols) -->
+        <div class="lg:col-span-4 bg-slate-950 p-5 flex flex-col justify-between overflow-y-auto space-y-4">
+            
+            <!-- Dynamic Hub/Route Detail Card -->
+            <div id="telemetryDetailCard" class="glass-card-accent p-4 rounded-xl shadow-xl space-y-3">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-[10px] font-black uppercase tracking-wider text-blue-400 block" id="telemetryTypeLabel">SELECTED CORRIDOR</span>
+                        <h3 class="text-base font-black text-white" id="telemetryTitle">Trans-Arabian Cross-Country</h3>
+                        <p class="text-[11px] text-slate-400 font-medium" id="telemetrySubtitle">Al Jubail Terminal ↔ Jeddah Port (1,450 km)</p>
+                    </div>
+                    <span class="px-2 py-1 rounded text-[10px] font-black bg-blue-500/20 text-blue-300 border border-blue-500/30 font-mono" id="telemetryBadge">3,795 Trips</span>
+                </div>
+
+                <!-- 3 Mini Metric Badges -->
+                <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-700/60 font-mono text-center">
+                    <div class="bg-slate-900/60 p-2 rounded border border-slate-800">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase block">West Group</span>
+                        <span class="text-xs font-black text-emerald-400" id="telemetryWestTrips">86 Trips</span>
+                    </div>
+                    <div class="bg-slate-900/60 p-2 rounded border border-slate-800">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase block">Subcontractors</span>
+                        <span class="text-xs font-black text-amber-400" id="telemetryThirdTrips">3,709 Trips</span>
+                    </div>
+                    <div class="bg-slate-900/60 p-2 rounded border border-slate-800">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase block">Turnaround</span>
+                        <span class="text-xs font-black text-blue-400" id="telemetryTat">4.0 Days</span>
+                    </div>
+                </div>
+
+                <!-- Key Shippers & Cargo -->
+                <div class="pt-2 border-t border-slate-800 text-[11px] space-y-1">
+                    <div class="flex justify-between text-slate-400 font-semibold">
+                        <span>Major Shippers:</span>
+                        <span class="text-slate-200 font-bold" id="telemetryShippers">SABIC, SADARA, Petro Rabigh</span>
+                    </div>
+                    <div class="flex justify-between text-slate-400 font-semibold">
+                        <span>Equipment Type:</span>
+                        <span class="text-slate-200 font-bold" id="telemetryEquipment">40ft Standard / ISO Tank / Flatbed</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Corridors Leaderboard -->
+            <div class="glass-card p-4 rounded-xl space-y-3 flex-1 flex flex-col">
+                <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+                    <h4 class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <span class="text-emerald-400">⚡</span> Top Volume Corridors (August 2026)
+                    </h4>
+                    <span class="text-[10px] font-bold text-slate-400">Sort by Trips</span>
+                </div>
+
+                <!-- Corridor List Items -->
+                <div class="space-y-2 flex-1 overflow-y-auto pr-1" id="corridorListContainer">
+                    <!-- Item 1: Jeddah Local -->
+                    <div onclick="selectRoute('JEDDAH', 'JEDDAH')" class="p-2.5 rounded-lg bg-slate-900/70 border border-slate-800 hover:border-emerald-500/50 transition cursor-pointer flex justify-between items-center group">
+                        <div>
+                            <div class="font-bold text-xs text-white group-hover:text-emerald-400 transition">Jeddah ↔ Jeddah Port (Local)</div>
+                            <div class="text-[10px] text-slate-400">267 Dedicated Trucks • 6,376 WG Trips</div>
+                        </div>
+                        <div class="text-right font-mono">
+                            <span class="text-xs font-black text-emerald-400">8,297</span>
+                            <span class="text-[9px] text-slate-500 block">Trips</span>
+                        </div>
+                    </div>
+
+                    <!-- Item 2: Yanbu Local -->
+                    <div onclick="selectRoute('YANBU', 'YANBU')" class="p-2.5 rounded-lg bg-slate-900/70 border border-slate-800 hover:border-cyan-500/50 transition cursor-pointer flex justify-between items-center group">
+                        <div>
+                            <div class="font-bold text-xs text-white group-hover:text-cyan-400 transition">Yanbu ↔ Yanbu Port (Local)</div>
+                            <div class="text-[10px] text-slate-400">50 Dedicated Trucks • 5,990 WG Trips</div>
+                        </div>
+                        <div class="text-right font-mono">
+                            <span class="text-xs font-black text-cyan-400">5,990</span>
+                            <span class="text-[9px] text-slate-500 block">Trips</span>
+                        </div>
+                    </div>
+
+                    <!-- Item 3: Jubail Local -->
+                    <div onclick="selectRoute('AL JUBAIL', 'AL JUBAIL')" class="p-2.5 rounded-lg bg-slate-900/70 border border-slate-800 hover:border-blue-500/50 transition cursor-pointer flex justify-between items-center group">
+                        <div>
+                            <div class="font-bold text-xs text-white group-hover:text-blue-400 transition">Jubail ↔ Jubail Port (Local)</div>
+                            <div class="text-[10px] text-slate-400">91 Dedicated Trucks • 4,725 WG Trips</div>
+                        </div>
+                        <div class="text-right font-mono">
+                            <span class="text-xs font-black text-blue-400">4,728</span>
+                            <span class="text-[9px] text-slate-500 block">Trips</span>
+                        </div>
+                    </div>
+
+                    <!-- Item 4: Jeddah <-> Yanbu -->
+                    <div onclick="selectRoute('JEDDAH', 'YANBU')" class="p-2.5 rounded-lg bg-slate-900/70 border border-slate-800 hover:border-amber-500/50 transition cursor-pointer flex justify-between items-center group">
+                        <div>
+                            <div class="font-bold text-xs text-white group-hover:text-amber-400 transition">Jeddah ↔ Yanbu Corridor (350 km)</div>
+                            <div class="text-[10px] text-slate-400">393 Active Assets • 1.5 Days TAT</div>
+                        </div>
+                        <div class="text-right font-mono">
+                            <span class="text-xs font-black text-amber-400">6,130</span>
+                            <span class="text-[9px] text-slate-500 block">Trips</span>
+                        </div>
+                    </div>
+
+                    <!-- Item 5: Jubail <-> Jeddah -->
+                    <div onclick="selectRoute('AL JUBAIL', 'JEDDAH')" class="p-2.5 rounded-lg bg-slate-900/70 border border-slate-800 hover:border-purple-500/50 transition cursor-pointer flex justify-between items-center group">
+                        <div>
+                            <div class="font-bold text-xs text-white group-hover:text-purple-400 transition">Jubail ↔ Jeddah (Cross-Country)</div>
+                            <div class="text-[10px] text-slate-400">1,188 Assets • 1,450 km Long-Haul</div>
+                        </div>
+                        <div class="text-right font-mono">
+                            <span class="text-xs font-black text-purple-400">3,795</span>
+                            <span class="text-[9px] text-slate-500 block">Trips</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT INTERACTIVE CONTROLS -->
+    <script>
+        const routeData = {
+            'AL JUBAIL_JEDDAH': {
+                title: 'Trans-Arabian Cross-Country',
+                subtitle: 'Al Jubail Terminal ↔ Jeddah Port (1,450 km)',
+                trips: '3,795 Trips',
+                west: '86 Trips',
+                third: '3,709 Trips',
+                tat: '4.0 Days',
+                shippers: 'SABIC, SADARA, Petro Rabigh, ARAMCO',
+                equipment: '40ft Standard / ISO Tank / Flatbed'
+            },
+            'YANBU_JEDDAH': {
+                title: 'Western Coast Express',
+                subtitle: 'Yanbu Industrial Port ↔ Jeddah Islamic Port (350 km)',
+                trips: '6,130 Trips',
+                west: '1,370 Trips',
+                third: '4,760 Trips',
+                tat: '1.5 Days',
+                shippers: 'YANSAB, NATPET, Luberef, Cristal',
+                equipment: '40ft Box / 20ft Heavy Weight'
+            },
+            'JEDDAH_JEDDAH': {
+                title: 'Jeddah Intra-City & Terminal Shuttle',
+                subtitle: 'Jeddah Islamic Port ↔ WG Terminals / Warehouses (Local)',
+                trips: '8,297 Trips',
+                west: '6,376 Trips',
+                third: '1,921 Trips',
+                tat: '0.3 Days',
+                shippers: 'SLine Agents, Bin Shaihon, Consumer Goods',
+                equipment: '20ft / 40ft High Cube / Chassis'
+            },
+            'YANBU_YANBU': {
+                title: 'Yanbu Industrial Shuttles',
+                subtitle: 'Yanbu Port ↔ Royal Commission Industrial Zone (Local)',
+                trips: '5,990 Trips',
+                west: '5,990 Trips',
+                third: '0 Trips',
+                tat: '0.2 Days',
+                shippers: 'YANSAB, Petrochemical Plants',
+                equipment: 'Heavy Duty 40ft Trailers'
+            },
+            'AL JUBAIL_AL JUBAIL': {
+                title: 'Jubail Industrial Corridor',
+                subtitle: 'Jubail Commercial Port ↔ PLF-SABIC Plants (Local)',
+                trips: '4,728 Trips',
+                west: '4,725 Trips',
+                third: '3 Trips',
+                tat: '0.3 Days',
+                shippers: 'SABIC Polymers, Sadara Chemical',
+                equipment: '40ft Standard Container / ISO Tanks'
+            },
+            'AL JUBAIL_DAMMAM': {
+                title: 'Eastern Province Gateway',
+                subtitle: 'Al Jubail ↔ King Abdulaziz Port Dammam (90 km)',
+                trips: '840 Trips',
+                west: '493 Trips',
+                third: '347 Trips',
+                tat: '0.8 Days',
+                shippers: 'Maersk, MSC, Regional Shippers',
+                equipment: 'General Cargo & Containerized'
+            }
+        };
+
+        const hubData = {
+            'JEDDAH': {
+                title: 'Jeddah Gateway & Western Hub',
+                subtitle: 'Jeddah Islamic Port, WG Terminal 1, Bin Shaihon Depot',
+                trips: '15,640 Total Hub Movements',
+                west: '7,793 WG Dedicated Trips',
+                third: '7,847 Subcontractor Trips',
+                tat: 'Major Red Sea Port',
+                shippers: 'SABIC, CMA CGM, Maersk, Bin Shaihon',
+                equipment: '267 Dedicated West Group Trucks Base'
+            },
+            'AL JUBAIL': {
+                title: 'Al Jubail Petrochemical Hub',
+                subtitle: 'Jubail Commercial & Industrial Ports, SABIC PLF Complex',
+                trips: '9,988 Total Hub Movements',
+                west: '5,302 WG Dedicated Trips',
+                third: '4,686 Subcontractor Trips',
+                tat: 'Arabian Gulf Energy Hub',
+                shippers: 'SABIC, SADARA, Advanced Petrochem',
+                equipment: '91 Dedicated West Group Trucks Base'
+            },
+            'YANBU': {
+                title: 'Yanbu Industrial City Hub',
+                subtitle: 'Yanbu Commercial Port & King Fahd Industrial Port',
+                trips: '12,120 Total Hub Movements',
+                west: '8,000 WG Dedicated Trips',
+                third: '4,120 Subcontractor Trips',
+                tat: 'Western Petrochem Axis',
+                shippers: 'YANSAB, Luberef, NATPET',
+                equipment: '50 Dedicated West Group Trucks Base'
+            },
+            'RIYADH': {
+                title: 'Riyadh Dry Port & Central Logistics',
+                subtitle: 'Riyadh Logistics Park & Sudair Industrial City',
+                trips: '120 Direct Hub Dispatches',
+                west: '120 WG Dedicated Trips',
+                third: '0 Subcontractor Trips',
+                tat: 'Central Inbound Corridor',
+                shippers: 'Retail, Manufacturing, Polymers',
+                equipment: 'Inter-Provincial Linehaul'
+            }
+        };
+
+        function selectRoute(fromCity, toCity) {
+            const key1 = `${fromCity}_${toCity}`;
+            const key2 = `${toCity}_${fromCity}`;
+            const d = routeData[key1] || routeData[key2] || {
+                title: `${fromCity} ↔ ${toCity}`,
+                subtitle: `Connecting ${fromCity} and ${toCity}`,
+                trips: 'Active Corridor',
+                west: 'Live Dispatches',
+                third: 'Subcontractors',
+                tat: 'Direct Corridor',
+                shippers: 'Regional Shippers',
+                equipment: 'Standard Equipment'
+            };
+
+            document.getElementById('telemetryTypeLabel').innerText = 'SELECTED CORRIDOR';
+            document.getElementById('telemetryTitle').innerText = d.title;
+            document.getElementById('telemetrySubtitle').innerText = d.subtitle;
+            document.getElementById('telemetryBadge').innerText = d.trips;
+            document.getElementById('telemetryWestTrips').innerText = d.west;
+            document.getElementById('telemetryThirdTrips').innerText = d.third;
+            document.getElementById('telemetryTat').innerText = d.tat;
+            document.getElementById('telemetryShippers').innerText = d.shippers;
+            document.getElementById('telemetryEquipment').innerText = d.equipment;
+        }
+
+        function selectHub(hubName) {
+            const h = hubData[hubName];
+            if (!h) return;
+
+            document.getElementById('telemetryTypeLabel').innerText = 'LOGISTICS HUB DETAILS';
+            document.getElementById('telemetryTitle').innerText = h.title;
+            document.getElementById('telemetrySubtitle').innerText = h.subtitle;
+            document.getElementById('telemetryBadge').innerText = h.trips;
+            document.getElementById('telemetryWestTrips').innerText = h.west;
+            document.getElementById('telemetryThirdTrips').innerText = h.third;
+            document.getElementById('telemetryTat').innerText = h.tat;
+            document.getElementById('telemetryShippers').innerText = h.shippers;
+            document.getElementById('telemetryEquipment').innerText = h.equipment;
+        }
+
+        function setFleetFilter(mode) {
+            ['btnFleetAll', 'btnFleetWest', 'btnFleetThird'].forEach(id => {
+                const btn = document.getElementById(id);
+                btn.className = "px-2.5 py-1 rounded text-[11px] font-bold text-slate-400 hover:text-white transition";
+            });
+
+            if (mode === 'ALL') {
+                document.getElementById('btnFleetAll').className = "px-2.5 py-1 rounded text-[11px] font-bold bg-blue-600 text-white transition";
+            } else if (mode === 'WEST') {
+                document.getElementById('btnFleetWest').className = "px-2.5 py-1 rounded text-[11px] font-bold bg-emerald-600 text-white transition";
+            } else {
+                document.getElementById('btnFleetThird').className = "px-2.5 py-1 rounded text-[11px] font-bold bg-amber-600 text-white transition";
+            }
+        }
+
+        function applyCorridorFilter() {
+            const val = document.getElementById('corridorFilter').value;
+            const lines = document.getElementById('corridorLinesGroup').children;
+            for (let i = 0; i < lines.length; i++) {
+                lines[i].style.opacity = '0.85';
+            }
+        }
+
+        function resetMapView() {
+            selectRoute('AL JUBAIL', 'JEDDAH');
+        }
+    </script>
+</body>
+</html>
