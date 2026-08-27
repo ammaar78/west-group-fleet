@@ -1022,17 +1022,19 @@
             </div>
 
             <!-- Table Title & Search Controls -->
-            <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3.5">
-                <div>
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
+                <div class="shrink-0">
                     <h3 class="text-base font-black text-slate-900 tracking-tight" id="tableTitle">Fleet Master Register</h3>
                     <p class="text-xs text-slate-500 font-medium">Detailed vehicle assignments, 7-day sparklines, maintenance dwell, and KPI achievement</p>
                 </div>
-                <div class="flex flex-wrap items-center gap-2 text-xs">
+                
+                <!-- Right-Aligned Unified Toolbar -->
+                <div class="flex flex-wrap items-center justify-start lg:justify-end gap-2 text-xs w-full lg:w-auto lg:ml-auto">
                     <!-- Search Input -->
-                    <input type="text" id="searchInput" onkeyup="resetAndRenderTable()" placeholder="Search Plate, Driver, Supervisor... (Press '/' to focus)" class="w-56 bg-slate-50 border border-slate-300 text-slate-900 px-3 py-1.5 rounded-lg text-xs focus:outline-none focus:border-slate-500 font-medium">
+                    <input type="text" id="searchInput" onkeyup="resetAndRenderTable()" placeholder="Search Plate, Driver... (Press '/' to focus)" class="w-48 bg-slate-50 border border-slate-300 text-slate-900 px-2.5 py-1.5 rounded-lg text-xs focus:outline-none focus:border-slate-500 font-medium">
                     
                     <!-- Status Filter -->
-                    <select id="filterStatus" onchange="resetAndRenderTable()" class="bg-slate-800 text-white border border-slate-700 font-bold px-2.5 py-1.5 rounded-lg text-xs focus:outline-none focus:border-amber-400 cursor-pointer shadow-sm hover:bg-slate-700 transition">
+                    <select id="filterStatus" onchange="resetAndRenderTable()" class="bg-slate-800 text-white border border-slate-700 font-bold px-2 py-1.5 rounded-lg text-xs focus:outline-none focus:border-amber-400 cursor-pointer shadow-sm hover:bg-slate-700 transition">
                         <option value="ALL" class="bg-slate-900 text-white py-1">All Statuses</option>
                         <option value="ACTIVE" class="bg-slate-900 text-emerald-400 font-bold py-1">Operating Active</option>
                         <option value="DELAY" class="bg-slate-900 text-amber-400 font-bold py-1">Operational Delay</option>
@@ -1044,7 +1046,7 @@
                     </select>
 
                     <!-- Supervisor Filter -->
-                    <select id="filterSup" onchange="resetAndRenderTable()" class="bg-slate-50 border border-slate-300 text-slate-900 px-2.5 py-1.5 rounded-lg text-xs font-semibold focus:outline-none focus:border-slate-500">
+                    <select id="filterSup" onchange="resetAndRenderTable()" class="bg-slate-50 border border-slate-300 text-slate-900 px-2 py-1.5 rounded-lg text-xs font-semibold focus:outline-none focus:border-slate-500">
                         <option value="ALL">All Supervisors</option>
                     </select>
 
@@ -1083,7 +1085,7 @@
                     </div>
 
                     <!-- Export Button -->
-                    <button id="btnExportCsvTable" onclick="exportFilteredData(); showToast('Export started — check your downloads', 'success');" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer">
+                    <button id="btnExportCsvTable" onclick="exportFilteredData(); showToast('Export started — check your downloads', 'success');" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer shrink-0">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                         <span>Export View</span>
                     </button>
