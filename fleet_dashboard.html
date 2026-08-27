@@ -312,6 +312,11 @@
                     <select id="dateFilter" onchange="updateDashboardView()" class="bg-slate-950 border border-blue-500/80 text-white font-extrabold text-xs px-2.5 py-1 rounded focus:outline-none cursor-pointer">
                     </select>
                 </div>
+                <button onclick="openSpotlightModal()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-slate-500 text-slate-200 text-xs font-bold px-3 py-2 rounded-lg transition shadow-sm flex items-center gap-2 cursor-pointer" title="Global Spotlight Search (Ctrl+K)">
+                    <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <span>Quick Find</span>
+                    <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono text-[10px] border border-slate-700">Ctrl K</kbd>
+                </button>
                 <button onclick="toggleShortcutsModal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold px-3 py-2 rounded-lg transition shadow-sm flex items-center gap-1.5 cursor-pointer" title="Keyboard Shortcuts (?)">
                     <span class="text-amber-400 font-mono text-xs">⌨</span>
                     <span>Shortcuts</span>
@@ -4198,13 +4203,42 @@ Click any bar to filter table`;
             const activeTag = (document.activeElement && document.activeElement.tagName) ? document.activeElement.tagName.toLowerCase() : '';
             const isInput = activeTag === 'input' || activeTag === 'select' || activeTag === 'textarea';
 
+            // Handle Global Ctrl+K / Cmd+K Spotlight Toggle
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+                e.preventDefault();
+                toggleSpotlightModal();
+                return;
+            }
+
+            const spotlightModal = document.getElementById('spotlightModal');
+            const isSpotlightOpen = spotlightModal && !spotlightModal.classList.contains('hidden');
+
             if (e.key === 'Escape') {
+                if (isSpotlightOpen) {
+                    e.preventDefault();
+                    closeSpotlightModal();
+                    return;
+                }
                 closeDelayModal();
                 closeTruckPassport();
                 closeShortcutsModal();
                 document.querySelectorAll('.card-fullscreen').forEach(el => el.classList.remove('card-fullscreen'));
                 window.dispatchEvent(new Event('resize'));
                 if (isInput) document.activeElement.blur();
+                return;
+            }
+
+            if (isSpotlightOpen) {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    navigateSpotlight(1);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    navigateSpotlight(-1);
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    executeSpotlightSelection();
+                }
                 return;
             }
 
@@ -4274,6 +4308,186 @@ Click any bar to filter table`;
             }
         }
 
+        // ==============================================================================
+        // SPOTLIGHT COMMAND BAR (Ctrl + K) CONTROLLER
+        // ==============================================================================
+        let spotlightItems = [];
+        let spotlightSelectedIndex = 0;
+
+        function openSpotlightModal() {
+            const modal = document.getElementById('spotlightModal');
+            const input = document.getElementById('spotlightInput');
+            if (!modal || !input) return;
+            modal.classList.remove('hidden');
+            input.value = '';
+            onSpotlightSearch('');
+            setTimeout(() => input.focus(), 50);
+        }
+
+        function closeSpotlightModal() {
+            const modal = document.getElementById('spotlightModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function toggleSpotlightModal() {
+            const modal = document.getElementById('spotlightModal');
+            if (!modal) return;
+            if (modal.classList.contains('hidden')) {
+                openSpotlightModal();
+            } else {
+                closeSpotlightModal();
+            }
+        }
+
+        function onSpotlightSearch(query) {
+            const q = String(query || '').trim().toLowerCase();
+            const resultsContainer = document.getElementById('spotlightResults');
+            const countLabel = document.getElementById('spotlightMatchCount');
+            if (!resultsContainer) return;
+
+            spotlightItems = [];
+
+            // 1. Check quick system actions
+            const quickActions = [
+                { type: 'action', title: 'Export Master Register CSV', subtitle: 'Download filtered data report', icon: '📥', action: () => { exportFilteredData(); closeSpotlightModal(); showToast('Export started — check downloads', 'success'); } },
+                { type: 'action', title: 'Switch to Entire Month Snapshot', subtitle: 'View full month aggregate performance', icon: '📅', action: () => { const df = document.getElementById('dateFilter'); if (df) { df.value = 'ALL_MONTH'; updateDashboardView(); closeSpotlightModal(); showToast('Switched to Entire Month Snapshot', 'info'); } } },
+                { type: 'action', title: 'Switch to Past 7 Days Snapshot', subtitle: 'View latest 7-day activity window', icon: '⚡', action: () => { const df = document.getElementById('dateFilter'); if (df) { df.value = 'LATEST_7_DAYS'; updateDashboardView(); closeSpotlightModal(); showToast('Switched to Past 7 Days Snapshot', 'info'); } } },
+                { type: 'action', title: 'Jump to Chronic Maintenance Watchlist', subtitle: 'View assets with high workshop downtime', icon: '🔧', action: () => { closeSpotlightModal(); const el = document.getElementById('secChronicMaint'); if (el) el.scrollIntoView({ behavior: 'smooth' }); } },
+                { type: 'action', title: 'Jump to Supervisor Radar Benchmark', subtitle: 'View 6-Factor operational benchmark', icon: '🎯', action: () => { closeSpotlightModal(); const el = document.getElementById('secSupervisorRadar'); if (el) el.scrollIntoView({ behavior: 'smooth' }); } }
+            ];
+
+            if (q) {
+                quickActions.forEach(act => {
+                    if (act.title.toLowerCase().includes(q) || act.subtitle.toLowerCase().includes(q)) {
+                        spotlightItems.push(act);
+                    }
+                });
+            }
+
+            // 2. Search trucks in rawData
+            if (rawData && Array.isArray(rawData)) {
+                let matchTrucks = rawData.filter(t => {
+                    if (!q) return true;
+                    const p = String(t.TruckPlate || '').toLowerCase();
+                    const std = String(t.StdPlate || '').toLowerCase();
+                    const d = String(t.DoorNo || '').toLowerCase();
+                    const drv = String(t.DriverName || '').toLowerCase();
+                    const sup = String(t.Supervisor || '').toLowerCase();
+                    const loc = String(t.AssignedLocation || '').toLowerCase();
+                    const trl = String(t.TrailerNumber || '').toLowerCase();
+                    return p.includes(q) || std.includes(q) || d.includes(q) || drv.includes(q) || sup.includes(q) || loc.includes(q) || trl.includes(q);
+                });
+
+                // Take top matches (up to 12)
+                matchTrucks.slice(0, 12).forEach(t => {
+                    spotlightItems.push({
+                        type: 'truck',
+                        plate: t.StdPlate,
+                        truckData: t,
+                        title: `${t.TruckPlate} / ${t.DoorNo || 'No Door'}`,
+                        subtitle: `Driver: ${t.DriverName || 'Unassigned'} • Supervisor: ${t.Supervisor} • Location: ${t.AssignedLocation}`,
+                        icon: '🚚',
+                        action: () => { closeSpotlightModal(); openTruckPassport(t.StdPlate); }
+                    });
+                });
+            }
+
+            // Fallback if no query: show 3 quick actions + 6 trucks
+            if (!q && spotlightItems.length === 0) {
+                spotlightItems = quickActions.slice(0, 3);
+                rawData.slice(0, 6).forEach(t => {
+                    spotlightItems.push({
+                        type: 'truck',
+                        plate: t.StdPlate,
+                        truckData: t,
+                        title: `${t.TruckPlate} / ${t.DoorNo || 'No Door'}`,
+                        subtitle: `Driver: ${t.DriverName || 'Unassigned'} • Supervisor: ${t.Supervisor} • Location: ${t.AssignedLocation}`,
+                        icon: '🚚',
+                        action: () => { closeSpotlightModal(); openTruckPassport(t.StdPlate); }
+                    });
+                });
+            }
+
+            spotlightSelectedIndex = 0;
+            renderSpotlightResults();
+            if (countLabel) countLabel.innerText = `${spotlightItems.length} match${spotlightItems.length === 1 ? '' : 'es'}`;
+        }
+
+        function renderSpotlightResults() {
+            const container = document.getElementById('spotlightResults');
+            if (!container) return;
+
+            if (spotlightItems.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 text-center text-slate-500">
+                        <div class="text-2xl mb-1">🔍</div>
+                        <div class="font-bold text-xs text-slate-400">No matching assets or actions found</div>
+                        <div class="text-[11px] text-slate-600 mt-0.5">Try searching by plate number, door number, or driver name</div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            spotlightItems.forEach((item, idx) => {
+                const isSelected = idx === spotlightSelectedIndex;
+                const activeClass = isSelected ? 'bg-blue-600/30 border-blue-500/80 text-white shadow-sm' : 'bg-slate-900/60 border-slate-800/80 text-slate-300 hover:bg-slate-800/80 hover:text-white';
+                
+                let badgeHtml = '';
+                if (item.type === 'action') {
+                    badgeHtml = `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] font-bold font-mono">ACTION</span>`;
+                } else if (item.truckData) {
+                    const status = item.truckData.DailyActivityStatus || 'Operating';
+                    const isMaint = status === 'In Maintenance';
+                    const badgeBg = isMaint ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : (status.includes('Active') ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30');
+                    badgeHtml = `<span class="px-2 py-0.5 rounded ${badgeBg} border text-[10px] font-bold">${status}</span>`;
+                }
+
+                html += `
+                    <div id="spotlightItem_${idx}" onclick="selectSpotlightItem(${idx})" class="p-2.5 rounded-xl border ${activeClass} transition cursor-pointer flex items-center justify-between gap-3 group">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-8 h-8 rounded-lg bg-slate-800/80 border border-slate-700/80 flex items-center justify-center text-sm shrink-0">
+                                ${item.icon}
+                            </div>
+                            <div class="min-w-0">
+                                <div class="font-bold text-xs truncate flex items-center gap-2">
+                                    <span>${item.title}</span>
+                                </div>
+                                <div class="text-[11px] text-slate-400 truncate mt-0.5">${item.subtitle}</div>
+                            </div>
+                        </div>
+                        <div class="shrink-0 flex items-center gap-2">
+                            ${badgeHtml}
+                            <span class="text-slate-500 text-xs font-bold group-hover:text-slate-300">↵</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function navigateSpotlight(direction) {
+            if (spotlightItems.length === 0) return;
+            spotlightSelectedIndex = (spotlightSelectedIndex + direction + spotlightItems.length) % spotlightItems.length;
+            renderSpotlightResults();
+            const el = document.getElementById(`spotlightItem_${spotlightSelectedIndex}`);
+            if (el) el.scrollIntoView({ block: 'nearest' });
+        }
+
+        function selectSpotlightItem(idx) {
+            spotlightSelectedIndex = idx;
+            executeSpotlightSelection();
+        }
+
+        function executeSpotlightSelection() {
+            if (spotlightItems.length === 0 || spotlightSelectedIndex < 0 || spotlightSelectedIndex >= spotlightItems.length) return;
+            const item = spotlightItems[spotlightSelectedIndex];
+            if (item && typeof item.action === 'function') {
+                item.action();
+            }
+        }
+
         // Restore saved sidebar preference
         try {
             if (localStorage.getItem('west_sidebar_collapsed') === '1') {
@@ -4302,6 +4516,33 @@ Click any bar to filter table`;
         }
     </script>
 
+    <!-- SPOTLIGHT COMMAND BAR MODAL (Ctrl + K) -->
+    <div id="spotlightModal" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-md z-50 flex items-start justify-center pt-16 sm:pt-24 p-4" onclick="if(event.target===this) closeSpotlightModal();">
+        <div class="bg-slate-900 rounded-2xl shadow-2xl max-w-2xl w-full flex flex-col overflow-hidden border border-slate-700">
+            <!-- Search Bar Input Header -->
+            <div class="p-3.5 bg-slate-950/90 border-b border-slate-800 flex items-center gap-3">
+                <svg class="w-5 h-5 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input type="text" id="spotlightInput" oninput="onSpotlightSearch(this.value)" placeholder="Search any truck, plate, driver, supervisor, or action... (e.g. 5007, Karim, Export)" class="w-full bg-transparent text-white placeholder-slate-500 text-sm font-semibold focus:outline-none" autocomplete="off" spellcheck="false">
+                <kbd class="px-2 py-1 rounded bg-slate-800 text-slate-400 font-mono text-[10px] border border-slate-700 shrink-0 cursor-pointer" onclick="closeSpotlightModal()">Esc</kbd>
+            </div>
+
+            <!-- Results List Container -->
+            <div id="spotlightResults" class="p-2 max-h-[380px] overflow-y-auto space-y-1">
+                <!-- Dynamic Spotlight Items -->
+            </div>
+
+            <!-- Keyboard Navigation Hint Footer -->
+            <div class="px-4 py-2 bg-slate-950 border-t border-slate-800/80 flex flex-wrap items-center justify-between text-[11px] text-slate-400 font-medium">
+                <div class="flex items-center gap-3">
+                    <span class="flex items-center gap-1"><kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[10px] border border-slate-700">↑</kbd> <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[10px] border border-slate-700">↓</kbd> Navigate</span>
+                    <span class="flex items-center gap-1"><kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[10px] border border-slate-700">Enter</kbd> Open Passport</span>
+                    <span class="flex items-center gap-1"><kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[10px] border border-slate-700">Esc</kbd> Close</span>
+                </div>
+                <span id="spotlightMatchCount" class="text-slate-500 font-mono">0 matches</span>
+            </div>
+        </div>
+    </div>
+
     <!-- KEYBOARD SHORTCUTS MODAL -->
     <div id="shortcutsModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full flex flex-col overflow-hidden border border-slate-300">
@@ -4317,7 +4558,11 @@ Click any bar to filter table`;
                     <span class="text-[10px] uppercase font-black text-slate-400 tracking-wider block">Global Navigation</span>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="flex justify-between items-center p-2 rounded bg-slate-50 border border-slate-200">
-                            <span class="font-semibold">Quick Search</span>
+                            <span class="font-semibold">Spotlight Quick Find</span>
+                            <kbd class="px-2 py-0.5 rounded bg-white border border-slate-300 font-mono font-bold shadow-sm">Ctrl+K</kbd>
+                        </div>
+                        <div class="flex justify-between items-center p-2 rounded bg-slate-50 border border-slate-200">
+                            <span class="font-semibold">Table Search</span>
                             <kbd class="px-2 py-0.5 rounded bg-white border border-slate-300 font-mono font-bold shadow-sm">/</kbd>
                         </div>
                         <div class="flex justify-between items-center p-2 rounded bg-slate-50 border border-slate-200">
@@ -4327,10 +4572,6 @@ Click any bar to filter table`;
                         <div class="flex justify-between items-center p-2 rounded bg-slate-50 border border-slate-200">
                             <span class="font-semibold">Shortcuts Help</span>
                             <kbd class="px-2 py-0.5 rounded bg-white border border-slate-300 font-mono font-bold shadow-sm">?</kbd>
-                        </div>
-                        <div class="flex justify-between items-center p-2 rounded bg-slate-50 border border-slate-200">
-                            <span class="font-semibold">Print Report</span>
-                            <kbd class="px-2 py-0.5 rounded bg-white border border-slate-300 font-mono font-bold shadow-sm">Ctrl+P</kbd>
                         </div>
                     </div>
                 </div>
