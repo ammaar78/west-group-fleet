@@ -3526,7 +3526,7 @@ Click any bar to filter table`;
 
             let mtdTrips = 0;
             let activeDaysCount = 0;
-            let maintDaysCount = 0;
+            let ribbonMaintDays = 0;
 
             const daysInMonth = datesAsc.length;
             datesAsc.forEach((d, idx) => {
@@ -3549,7 +3549,7 @@ Click any bar to filter table`;
                         </div>
                     `;
                 } else if (isMaint) {
-                    maintDaysCount++;
+                    ribbonMaintDays++;
                     const job = maintDateMap[stdPlate][d].job || 'Garage';
                     pill.className += ' bg-rose-500 text-white border-rose-600 shadow-sm hover:scale-105';
                     pill.innerHTML = `
