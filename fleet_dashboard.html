@@ -1022,26 +1022,67 @@
             </div>
 
             <!-- Table Title & Search Controls -->
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3.5">
                 <div>
-                    <h3 class="text-base font-bold text-slate-900" id="tableTitle">Fleet Master Register</h3>
-                    <p class="text-xs text-slate-500 font-medium">Detailed vehicle assignments, maintenance status, and operational status</p>
+                    <h3 class="text-base font-black text-slate-900 tracking-tight" id="tableTitle">Fleet Master Register</h3>
+                    <p class="text-xs text-slate-500 font-medium">Detailed vehicle assignments, 7-day sparklines, maintenance dwell, and KPI achievement</p>
                 </div>
-                <div class="flex flex-wrap items-center gap-3">
-                    <input type="text" id="searchInput" onkeyup="resetAndRenderTable()" placeholder="Search Plate, Driver, Supervisor... (Press '/' to focus)" class="w-64 bg-slate-50 border border-slate-300 text-slate-900 px-3 py-1.5 rounded-lg text-xs focus:outline-none focus:border-slate-500 font-medium">
-                    <select id="filterStatus" onchange="resetAndRenderTable()" class="bg-slate-800 text-white border border-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs focus:outline-none focus:border-amber-400 cursor-pointer shadow-sm hover:bg-slate-700 transition">
-                        <option value="ALL" class="bg-slate-900 text-white py-1">All Operational Statuses</option>
-                        <option value="ACTIVE" class="bg-slate-900 text-emerald-400 font-bold py-1">Operating Active Only</option>
-                        <option value="DELAY" class="bg-slate-900 text-amber-400 font-bold py-1">Operational Delay Only</option>
-                        <option value="MAINTENANCE" class="bg-slate-900 text-orange-400 font-bold py-1">In Maintenance Only</option>
-                        <option value="OUT_OF_SERVICE" class="bg-slate-900 text-rose-400 font-bold py-1">Out of Service / Accident Only</option>
-                        <option value="UNASSIGNED" class="bg-slate-900 text-purple-400 font-bold py-1">Unassigned Drivers Only</option>
-                        <option value="KPI_ACHIEVED" class="bg-slate-900 text-blue-400 font-bold py-1">Achieved KPI (≥100%) Only</option>
-                        <option value="KPI_BELOW" class="bg-slate-900 text-slate-300 font-bold py-1">Below KPI (&lt;100%) Only</option>
+                <div class="flex flex-wrap items-center gap-2 text-xs">
+                    <!-- Search Input -->
+                    <input type="text" id="searchInput" onkeyup="resetAndRenderTable()" placeholder="Search Plate, Driver, Supervisor... (Press '/' to focus)" class="w-56 bg-slate-50 border border-slate-300 text-slate-900 px-3 py-1.5 rounded-lg text-xs focus:outline-none focus:border-slate-500 font-medium">
+                    
+                    <!-- Status Filter -->
+                    <select id="filterStatus" onchange="resetAndRenderTable()" class="bg-slate-800 text-white border border-slate-700 font-bold px-2.5 py-1.5 rounded-lg text-xs focus:outline-none focus:border-amber-400 cursor-pointer shadow-sm hover:bg-slate-700 transition">
+                        <option value="ALL" class="bg-slate-900 text-white py-1">All Statuses</option>
+                        <option value="ACTIVE" class="bg-slate-900 text-emerald-400 font-bold py-1">Operating Active</option>
+                        <option value="DELAY" class="bg-slate-900 text-amber-400 font-bold py-1">Operational Delay</option>
+                        <option value="MAINTENANCE" class="bg-slate-900 text-orange-400 font-bold py-1">In Maintenance</option>
+                        <option value="OUT_OF_SERVICE" class="bg-slate-900 text-rose-400 font-bold py-1">Out of Service</option>
+                        <option value="UNASSIGNED" class="bg-slate-900 text-purple-400 font-bold py-1">Unassigned Driver</option>
+                        <option value="KPI_ACHIEVED" class="bg-slate-900 text-blue-400 font-bold py-1">Achieved KPI (≥100%)</option>
+                        <option value="KPI_BELOW" class="bg-slate-900 text-slate-300 font-bold py-1">Below KPI (&lt;100%)</option>
                     </select>
-                    <select id="filterSup" onchange="resetAndRenderTable()" class="bg-slate-50 border border-slate-300 text-slate-900 px-3 py-1.5 rounded-lg text-xs font-semibold focus:outline-none focus:border-slate-500">
+
+                    <!-- Supervisor Filter -->
+                    <select id="filterSup" onchange="resetAndRenderTable()" class="bg-slate-50 border border-slate-300 text-slate-900 px-2.5 py-1.5 rounded-lg text-xs font-semibold focus:outline-none focus:border-slate-500">
                         <option value="ALL">All Supervisors</option>
                     </select>
+
+                    <!-- Table Density Switcher -->
+                    <div class="flex items-center bg-slate-100 border border-slate-300 rounded-lg p-0.5 text-[11px] font-bold shadow-xs">
+                        <button onclick="setTableDensity('compact')" id="btnDensityCompact" class="px-2 py-1 rounded text-slate-600 hover:text-slate-900 transition cursor-pointer" title="Compact view">Compact</button>
+                        <button onclick="setTableDensity('standard')" id="btnDensityStandard" class="px-2 py-1 rounded bg-white text-slate-900 shadow-xs font-bold cursor-pointer" title="Standard view">Standard</button>
+                        <button onclick="setTableDensity('comfortable')" id="btnDensityComfortable" class="px-2 py-1 rounded text-slate-600 hover:text-slate-900 transition cursor-pointer" title="Relaxed view">Relaxed</button>
+                    </div>
+
+                    <!-- Column Visibility Dropdown -->
+                    <div class="relative inline-block text-left">
+                        <button onclick="toggleColumnManagerDropdown()" id="btnColManager" class="bg-slate-50 hover:bg-slate-100 border border-slate-300 text-slate-700 font-bold px-2.5 py-1.5 rounded-lg text-xs flex items-center gap-1 shadow-xs transition cursor-pointer" title="Customize Columns">
+                            <span>🎛️ Columns</span>
+                            <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div id="colManagerMenu" class="hidden absolute right-0 mt-1.5 w-60 bg-white border border-slate-300 rounded-xl shadow-2xl p-3 z-30 space-y-2 text-xs divide-y divide-slate-100">
+                            <div class="font-bold text-slate-900 pb-1 text-[11px] uppercase tracking-wider flex justify-between items-center">
+                                <span>Visible Columns</span>
+                                <button onclick="resetDefaultColumns()" class="text-[10px] text-blue-600 hover:underline cursor-pointer">Reset All</button>
+                            </div>
+                            <div class="space-y-1.5 pt-1.5 max-h-56 overflow-y-auto font-medium text-slate-700">
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked disabled class="rounded text-blue-600"> <span>Plate / Door No</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chkCol_Sparkline" onchange="toggleTableColumn('sparkline', this.checked)" checked class="rounded text-blue-600"> <span>7-Day Trajectory</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chkCol_Trailer" onchange="toggleTableColumn('trailer', this.checked)" checked class="rounded text-blue-600"> <span>Trailer Number</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chkCol_Driver" onchange="toggleTableColumn('driver', this.checked)" checked class="rounded text-blue-600"> <span>Driver Name</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chkCol_Supervisor" onchange="toggleTableColumn('supervisor', this.checked)" checked class="rounded text-blue-600"> <span>Supervisor Team</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chkCol_Location" onchange="toggleTableColumn('location', this.checked)" checked class="rounded text-blue-600"> <span>Assigned Location</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chkCol_Tripdate" onchange="toggleTableColumn('tripdate', this.checked)" checked class="rounded text-blue-600"> <span>Latest Trip Date</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chkCol_Trips" onchange="toggleTableColumn('trips', this.checked)" checked class="rounded text-blue-600"> <span>Trips Count</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chkCol_Kpi" onchange="toggleTableColumn('kpi', this.checked)" checked class="rounded text-blue-600"> <span>Driver KPI %</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chkCol_Maint" onchange="toggleTableColumn('maint', this.checked)" checked class="rounded text-blue-600"> <span>Maintenance Status</span></label>
+                                <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chkCol_Status" onchange="toggleTableColumn('status', this.checked)" checked class="rounded text-blue-600"> <span>Operational Status</span></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Export Button -->
                     <button id="btnExportCsvTable" onclick="exportFilteredData(); showToast('Export started — check your downloads', 'success');" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                         <span>Export View</span>
@@ -1049,21 +1090,44 @@
                 </div>
             </div>
 
-            <!-- Data Grid (9 Columns: Plate, Trailer, Driver, Supervisor, Location, TripDate, Trips, Maintenance, Operational Status) -->
-            <div class="overflow-x-auto rounded border border-slate-200">
+            <!-- Data Grid (Clickable Sorting Headers + 7-Day Sparkline) -->
+            <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-xs">
                 <table class="w-full text-left text-xs text-slate-800">
-                    <thead class="bg-slate-50 text-[11px] uppercase text-slate-500 font-bold border-b border-slate-200 tracking-wider">
-                        <tr class="bg-slate-100/90 text-slate-700 text-xs uppercase tracking-wider font-bold border-b border-slate-200">
-                            <th class="p-3 text-left">Plate Number / Door No</th>
-                            <th class="p-3">Trailer Number</th>
-                            <th class="p-3">Driver Name</th>
-                            <th class="p-3">Supervisor Team</th>
-                            <th class="p-3">Assigned Location</th>
-                            <th class="p-3">Latest Trip Date</th>
-                            <th class="p-3 text-center">Trips Count</th>
-                            <th class="p-3 text-center">Driver KPI</th>
-                            <th class="p-3">Maintenance Status</th>
-                            <th class="p-3">Operational Status</th>
+                    <thead class="bg-slate-100/90 text-slate-700 text-[11px] uppercase tracking-wider font-bold border-b border-slate-200 select-none">
+                        <tr>
+                            <th id="thCol_plate" onclick="sortTableBy('plate')" class="p-3 text-left cursor-pointer hover:bg-slate-200/70 transition">
+                                <span class="flex items-center justify-between gap-1">Plate / Door <span id="sortIcon_plate" class="text-slate-300 text-[10px]">↕</span></span>
+                            </th>
+                            <th id="thCol_sparkline" class="p-3 text-center">
+                                <span>7-Day Trajectory</span>
+                            </th>
+                            <th id="thCol_trailer" onclick="sortTableBy('trailer')" class="p-3 cursor-pointer hover:bg-slate-200/70 transition">
+                                <span class="flex items-center justify-between gap-1">Trailer <span id="sortIcon_trailer" class="text-slate-300 text-[10px]">↕</span></span>
+                            </th>
+                            <th id="thCol_driver" onclick="sortTableBy('driver')" class="p-3 cursor-pointer hover:bg-slate-200/70 transition">
+                                <span class="flex items-center justify-between gap-1">Driver Name <span id="sortIcon_driver" class="text-slate-300 text-[10px]">↕</span></span>
+                            </th>
+                            <th id="thCol_supervisor" onclick="sortTableBy('supervisor')" class="p-3 cursor-pointer hover:bg-slate-200/70 transition">
+                                <span class="flex items-center justify-between gap-1">Supervisor <span id="sortIcon_supervisor" class="text-slate-300 text-[10px]">↕</span></span>
+                            </th>
+                            <th id="thCol_location" onclick="sortTableBy('location')" class="p-3 cursor-pointer hover:bg-slate-200/70 transition">
+                                <span class="flex items-center justify-between gap-1">Location <span id="sortIcon_location" class="text-slate-300 text-[10px]">↕</span></span>
+                            </th>
+                            <th id="thCol_tripdate" onclick="sortTableBy('tripdate')" class="p-3 cursor-pointer hover:bg-slate-200/70 transition">
+                                <span class="flex items-center justify-between gap-1">Latest Trip <span id="sortIcon_tripdate" class="text-slate-300 text-[10px]">↕</span></span>
+                            </th>
+                            <th id="thCol_trips" onclick="sortTableBy('trips')" class="p-3 text-center cursor-pointer hover:bg-slate-200/70 transition">
+                                <span class="flex items-center justify-center gap-1">Trips <span id="sortIcon_trips" class="text-blue-600 font-black text-[10px]">▼</span></span>
+                            </th>
+                            <th id="thCol_kpi" onclick="sortTableBy('kpi')" class="p-3 text-center cursor-pointer hover:bg-slate-200/70 transition">
+                                <span class="flex items-center justify-center gap-1">Driver KPI <span id="sortIcon_kpi" class="text-slate-300 text-[10px]">↕</span></span>
+                            </th>
+                            <th id="thCol_maint" onclick="sortTableBy('maint')" class="p-3 cursor-pointer hover:bg-slate-200/70 transition">
+                                <span class="flex items-center justify-between gap-1">Maintenance <span id="sortIcon_maint" class="text-slate-300 text-[10px]">↕</span></span>
+                            </th>
+                            <th id="thCol_status" onclick="sortTableBy('status')" class="p-3 cursor-pointer hover:bg-slate-200/70 transition">
+                                <span class="flex items-center justify-between gap-1">Status <span id="sortIcon_status" class="text-slate-300 text-[10px]">↕</span></span>
+                            </th>
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-slate-200 bg-white"></tbody>
@@ -1530,9 +1594,156 @@
             renderTable();
         }
 
-        // Master Register Pagination State
+        // ==============================================================================
+        // MASTER TABLE ENHANCEMENTS (Sparklines, Column Visibility, Sorting, Density)
+        // ==============================================================================
         let tableCurrentPage = 1;
         let tablePageSize = 25;
+        let tableSortColumn = 'trips';
+        let tableSortAsc = false;
+        let tableDensity = 'standard';
+        let tableVisibleColumns = {
+            plate: true,
+            sparkline: true,
+            trailer: true,
+            driver: true,
+            supervisor: true,
+            location: true,
+            tripdate: true,
+            trips: true,
+            kpi: true,
+            maint: true,
+            status: true
+        };
+
+        try {
+            const savedCols = localStorage.getItem('west_table_cols');
+            if (savedCols) tableVisibleColumns = Object.assign(tableVisibleColumns, JSON.parse(savedCols));
+            const savedDensity = localStorage.getItem('west_table_density');
+            if (savedDensity) tableDensity = savedDensity;
+        } catch(e) {}
+
+        function setTableDensity(mode) {
+            tableDensity = mode;
+            try { localStorage.setItem('west_table_density', mode); } catch(e) {}
+            ['btnDensityCompact', 'btnDensityStandard', 'btnDensityComfortable'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.className = 'px-2 py-1 rounded text-slate-600 hover:text-slate-900 transition cursor-pointer';
+            });
+            const activeId = mode === 'compact' ? 'btnDensityCompact' : (mode === 'comfortable' ? 'btnDensityComfortable' : 'btnDensityStandard');
+            const activeBtn = document.getElementById(activeId);
+            if (activeBtn) activeBtn.className = 'px-2 py-1 rounded bg-white text-slate-900 shadow-xs font-bold cursor-pointer';
+            renderTable();
+        }
+
+        function toggleColumnManagerDropdown() {
+            const menu = document.getElementById('colManagerMenu');
+            if (menu) menu.classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById('colManagerMenu');
+            const btn = document.getElementById('btnColManager');
+            if (menu && !menu.classList.contains('hidden') && btn && !btn.contains(e.target) && !menu.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        function toggleTableColumn(colKey, isVisible) {
+            tableVisibleColumns[colKey] = isVisible;
+            try { localStorage.setItem('west_table_cols', JSON.stringify(tableVisibleColumns)); } catch(e) {}
+            renderTableHeaderVisibility();
+            renderTable();
+        }
+
+        function resetDefaultColumns() {
+            Object.keys(tableVisibleColumns).forEach(k => { tableVisibleColumns[k] = true; });
+            ['chkCol_Sparkline', 'chkCol_Trailer', 'chkCol_Driver', 'chkCol_Supervisor', 'chkCol_Location', 'chkCol_Tripdate', 'chkCol_Trips', 'chkCol_Kpi', 'chkCol_Maint', 'chkCol_Status'].forEach(id => {
+                const chk = document.getElementById(id);
+                if (chk) chk.checked = true;
+            });
+            try { localStorage.removeItem('west_table_cols'); } catch(e) {}
+            renderTableHeaderVisibility();
+            renderTable();
+        }
+
+        function renderTableHeaderVisibility() {
+            for (const col in tableVisibleColumns) {
+                const th = document.getElementById(`thCol_${col}`);
+                if (th) {
+                    if (tableVisibleColumns[col] === false) th.classList.add('hidden');
+                    else th.classList.remove('hidden');
+                }
+                const chk = document.getElementById(`chkCol_${col.charAt(0).toUpperCase() + col.slice(1)}`);
+                if (chk) chk.checked = tableVisibleColumns[col] !== false;
+            }
+        }
+
+        function sortTableBy(colKey) {
+            if (tableSortColumn === colKey) {
+                tableSortAsc = !tableSortAsc;
+            } else {
+                tableSortColumn = colKey;
+                tableSortAsc = (colKey === 'plate' || colKey === 'driver' || colKey === 'supervisor' || colKey === 'location');
+            }
+            updateSortIcons();
+            renderTable();
+        }
+
+        function updateSortIcons() {
+            const cols = ['plate', 'trailer', 'driver', 'supervisor', 'location', 'tripdate', 'trips', 'kpi', 'maint', 'status'];
+            cols.forEach(c => {
+                const icon = document.getElementById(`sortIcon_${c}`);
+                if (icon) {
+                    if (tableSortColumn === c) {
+                        icon.innerText = tableSortAsc ? '▲' : '▼';
+                        icon.className = 'text-blue-600 font-black ml-1 text-[10px]';
+                    } else {
+                        icon.innerText = '↕';
+                        icon.className = 'text-slate-300 ml-1 text-[10px]';
+                    }
+                }
+            });
+        }
+
+        function generateSparklineSvg(stdPlate, targetDates) {
+            if (!targetDates || targetDates.length === 0) return '<span class="text-slate-300">-</span>';
+            const dates7 = targetDates.slice(0, 7).reverse();
+            const tripVals = dates7.map(d => (dailyTripsMap[stdPlate] && dailyTripsMap[stdPlate][d]) ? dailyTripsMap[stdPlate][d] : 0);
+            const maintVals = dates7.map(d => (maintDateMap && maintDateMap[stdPlate] && maintDateMap[stdPlate][d]) ? true : false);
+            
+            const maxVal = Math.max(1, ...tripVals);
+            let barsHtml = '';
+            const barWidth = 6;
+            const gap = 2.5;
+            const svgHeight = 18;
+            
+            dates7.forEach((dStr, idx) => {
+                const trips = tripVals[idx];
+                const isMaint = maintVals[idx];
+                const x = idx * (barWidth + gap) + 1;
+                
+                let barHeight = trips > 0 ? Math.max(4, Math.round((trips / maxVal) * (svgHeight - 4))) : 3;
+                let y = svgHeight - barHeight;
+                let color = '#cbd5e1';
+                let title = `${dStr}: 0 trips`;
+                
+                if (isMaint) {
+                    color = '#f43f5e';
+                    title = `${dStr}: In Workshop`;
+                    barHeight = svgHeight - 4;
+                    y = 2;
+                } else if (trips > 0) {
+                    color = '#10b981';
+                    title = `${dStr}: ${trips} trip${trips === 1 ? '' : 's'}`;
+                }
+                
+                barsHtml += `<rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="1" fill="${color}"><title>${title}</title></rect>`;
+            });
+            
+            const totalWidth = dates7.length * (barWidth + gap) + 2;
+            return `<svg width="${totalWidth}" height="${svgHeight}" class="inline-block cursor-help drop-shadow-xs" title="7-Day Trip Activity">${barsHtml}</svg>`;
+        }
 
         function resetAndRenderTable() {
             tableCurrentPage = 1;
@@ -1553,6 +1764,25 @@
         }
 
         function renderTable() {
+            renderTableHeaderVisibility();
+            updateSortIcons();
+
+            const selMonth = (monthSelect && monthSelect.value && monthSelect.value !== '') ? monthSelect.value : (availableMonths[0] || '');
+            const selDate = document.getElementById('dateFilter') ? document.getElementById('dateFilter').value : 'LATEST_7_DAYS';
+            const allDatesInMonth = monthDatesMap[selMonth] || [];
+
+            let targetDates = [];
+            if (selDate === 'LATEST_7_DAYS') {
+                targetDates = allDatesInMonth.slice(0, 7);
+            } else if (selDate === 'ALL_MONTH') {
+                targetDates = allDatesInMonth;
+            } else if (selDate !== '') {
+                const sIdx = allDatesInMonth.indexOf(selDate);
+                targetDates = sIdx !== -1 ? allDatesInMonth.slice(sIdx, sIdx + 7) : [selDate];
+            } else {
+                targetDates = allDatesInMonth.slice(0, 7);
+            }
+
             const query = document.getElementById('searchInput').value.toLowerCase();
             const selectedVal = document.getElementById('filterSup').value;
             const selectedStatus = document.getElementById('filterStatus') ? document.getElementById('filterStatus').value : 'ALL';
@@ -1613,6 +1843,51 @@
                 filtered = filtered.filter(d => targetPlates.has(d.StdPlate));
             }
 
+            // Interactive Column Sorting
+            filtered.sort((a, b) => {
+                let va, vb;
+                if (tableSortColumn === 'plate') {
+                    va = String(a.DoorNo || a.TruckPlate || '').toLowerCase();
+                    vb = String(b.DoorNo || b.TruckPlate || '').toLowerCase();
+                } else if (tableSortColumn === 'trailer') {
+                    va = String(a.TrailerNumber || a.TrailerNo || '').toLowerCase();
+                    vb = String(b.TrailerNumber || b.TrailerNo || '').toLowerCase();
+                } else if (tableSortColumn === 'driver') {
+                    va = String(a.DriverName || '').toLowerCase();
+                    vb = String(b.DriverName || '').toLowerCase();
+                } else if (tableSortColumn === 'supervisor') {
+                    va = String(a.Supervisor || '').toLowerCase();
+                    vb = String(b.Supervisor || '').toLowerCase();
+                } else if (tableSortColumn === 'location') {
+                    va = String(a.AssignedLocation || '').toLowerCase();
+                    vb = String(b.AssignedLocation || '').toLowerCase();
+                } else if (tableSortColumn === 'tripdate') {
+                    va = String(a.LatestTripDate || '');
+                    vb = String(b.LatestTripDate || '');
+                } else if (tableSortColumn === 'trips') {
+                    va = Number(a.TotalTripsCount || 0);
+                    vb = Number(b.TotalTripsCount || 0);
+                } else if (tableSortColumn === 'kpi') {
+                    va = Number(a.AchievementPct || 0);
+                    vb = Number(b.AchievementPct || 0);
+                } else if (tableSortColumn === 'maint') {
+                    va = String(a.MaintenanceStatus || '');
+                    vb = String(b.MaintenanceStatus || '');
+                } else if (tableSortColumn === 'status') {
+                    va = String(a.DailyActivityStatus || '');
+                    vb = String(b.DailyActivityStatus || '');
+                } else {
+                    va = Number(a.TotalTripsCount || 0);
+                    vb = Number(b.TotalTripsCount || 0);
+                }
+
+                if (typeof va === 'string') {
+                    return tableSortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+                } else {
+                    return tableSortAsc ? (va - vb) : (vb - va);
+                }
+            });
+
             // Pagination Calculations
             const totalItems = filtered.length;
             const pageSize = tablePageSize === -1 ? totalItems : tablePageSize;
@@ -1624,9 +1899,12 @@
             const endIdx = tablePageSize === -1 ? totalItems : Math.min(startIdx + pageSize, totalItems);
             const pageItems = filtered.slice(startIdx, endIdx);
 
+            const padClass = tableDensity === 'compact' ? 'p-1.5' : (tableDensity === 'comfortable' ? 'p-3.5' : 'p-2.5');
+            const fontClass = tableDensity === 'compact' ? 'text-[11px]' : 'text-xs';
+
             pageItems.forEach(d => {
                 const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition border-b border-slate-100';
+                tr.className = `hover:bg-slate-50 transition border-b border-slate-100 ${fontClass}`;
                 
                 let statusBadge = '<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>' + d.DailyActivityStatus + '</span>';
                 if (String(d.DailyActivityStatus).includes('Out of Service') || String(d.OfficialStatus).toLowerCase().includes('accident')) {
@@ -1641,7 +1919,7 @@
                     statusBadge = '<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Operational Delay</span>';
                 }
 
-                let maintBadge = '<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-extrabold bg-emerald-100 text-emerald-900 border border-emerald-400 shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>Clean</span>';
+                let maintBadge = '<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-extrabold bg-emerald-100 text-emerald-900 border border-emerald-400 shadow-xs"><span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>Clean</span>';
                 const mStr = String(d.MaintenanceStatus || '');
                 if (mStr.includes('Out of Service')) {
                     maintBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-50 text-rose-800 border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Out of Service</span>`;
@@ -1657,11 +1935,14 @@
                 }
 
                 const plateDoorDisplay = formatPlateDoorDisplay(d.StdPlate, d.DoorNo);
+                const sparklineSvg = generateSparklineSvg(d.StdPlate, targetDates);
 
-                tr.innerHTML = `
-                    <td class="p-3">${plateDoorDisplay}</td>
-                    <td class="p-3 text-slate-500 font-medium">${d.TrailerNumber || d.TrailerNo || 'N/A'}</td>
-                    <td class="p-3">
+                let rowHtml = '';
+                if (tableVisibleColumns.plate !== false) rowHtml += `<td class="${padClass}">${plateDoorDisplay}</td>`;
+                if (tableVisibleColumns.sparkline !== false) rowHtml += `<td class="${padClass} text-center">${sparklineSvg}</td>`;
+                if (tableVisibleColumns.trailer !== false) rowHtml += `<td class="${padClass} text-slate-500 font-medium">${d.TrailerNumber || d.TrailerNo || 'N/A'}</td>`;
+                if (tableVisibleColumns.driver !== false) {
+                    rowHtml += `<td class="${padClass}">
                         ${
                             (String(d.DriverName).toLowerCase().includes('accident') || String(d.OfficialStatus).toLowerCase().includes('accident'))
                                 ? '<span class="text-slate-500 font-semibold italic">N/A (Accident)</span>'
@@ -1669,14 +1950,17 @@
                                     ? '<span class="text-rose-600 font-bold italic">Unassigned Driver</span>'
                                     : `<span class="font-semibold text-slate-800">${d.DriverName}</span>`)
                         }
-                    </td>
-                    <td class="p-3"><span class="px-2 py-0.5 bg-slate-100 text-slate-800 rounded text-xs font-semibold border border-slate-200">${d.Supervisor}</span></td>
-                    <td class="p-3 font-medium text-slate-600">${d.AssignedLocation}</td>
-                    <td class="p-3 font-mono text-xs font-semibold text-slate-700">${d.LatestTripDate || 'N/A'}</td>
-                    <td class="p-3 text-center font-bold text-amber-800 text-xs">${d.TotalTripsCount || 0}</td>
-                    <td class="p-3 text-center">${kpiBadge}</td>
-                    <td class="p-3">${maintBadge}</td>
-                    <td class="p-3">${statusBadge}</td>`;
+                    </td>`;
+                }
+                if (tableVisibleColumns.supervisor !== false) rowHtml += `<td class="${padClass}"><span class="px-2 py-0.5 bg-slate-100 text-slate-800 rounded text-xs font-semibold border border-slate-200">${d.Supervisor}</span></td>`;
+                if (tableVisibleColumns.location !== false) rowHtml += `<td class="${padClass} font-medium text-slate-600">${d.AssignedLocation}</td>`;
+                if (tableVisibleColumns.tripdate !== false) rowHtml += `<td class="${padClass} font-mono font-semibold text-slate-700">${d.LatestTripDate || 'N/A'}</td>`;
+                if (tableVisibleColumns.trips !== false) rowHtml += `<td class="${padClass} text-center font-black text-amber-800">${d.TotalTripsCount || 0}</td>`;
+                if (tableVisibleColumns.kpi !== false) rowHtml += `<td class="${padClass} text-center">${kpiBadge}</td>`;
+                if (tableVisibleColumns.maint !== false) rowHtml += `<td class="${padClass}">${maintBadge}</td>`;
+                if (tableVisibleColumns.status !== false) rowHtml += `<td class="${padClass}">${statusBadge}</td>`;
+
+                tr.innerHTML = rowHtml;
                 tbody.appendChild(tr);
             });
 
