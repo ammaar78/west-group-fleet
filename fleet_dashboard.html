@@ -2413,8 +2413,7 @@
                         '"' + (d.DailyActivityStatus || '-') + '"'
                     ].join(','));
                 });
-                const csvContent = '﻿' + csvLines.join('
-');
+                const csvContent = '﻿' + csvLines.join(String.fromCharCode(13, 10));
                 const blob = new Blob([csvContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
