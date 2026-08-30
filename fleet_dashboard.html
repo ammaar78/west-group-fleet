@@ -1286,8 +1286,9 @@
                             <p class="text-[11px] text-slate-500 font-medium" id="passportRibbonMonthLabel">Day-by-Day Deployment Matrix for Selected Month</p>
                         </div>
                         <!-- Ribbon Legend -->
-                        <div class="flex items-center gap-3 text-[10px] font-bold text-slate-600">
+                        <div class="flex flex-wrap items-center gap-3 text-[10px] font-bold text-slate-600">
                             <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-emerald-500 inline-block"></span> Operating Trip</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-emerald-500 relative inline-block"><span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-rose-500 ring-1 ring-white"></span></span> Trip + Workshop</span>
                             <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-amber-400 inline-block"></span> Road-Ready Idle</span>
                             <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-rose-500 inline-block"></span> Workshop Dwell</span>
                             <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-slate-200 inline-block"></span> Off / Rest</span>
@@ -3863,7 +3864,8 @@ Click any bar to filter table`;
             datesAsc.forEach((d, idx) => {
                 const dayNum = idx + 1;
                 const dTrips = (dailyTripsMap[stdPlate] && dailyTripsMap[stdPlate][d]) ? dailyTripsMap[stdPlate][d] : 0;
-                const isMaint = (maintDateMap[stdPlate] && maintDateMap[stdPlate][d]);
+                const isMaint = (maintDateMap && maintDateMap[stdPlate] && maintDateMap[stdPlate][d]);
+                const maintInfo = isMaint ? (typeof maintDateMap[stdPlate][d] === 'object' ? (maintDateMap[stdPlate][d].job || 'Garage') : maintDateMap[stdPlate][d]) : '';
 
                 const pill = document.createElement('div');
                 pill.className = 'p-2 rounded-lg border text-center flex flex-col justify-between transition-all duration-150 relative group cursor-pointer';
@@ -3872,22 +3874,30 @@ Click any bar to filter table`;
                     mtdTrips += dTrips;
                     activeDaysCount++;
                     pill.className += ' bg-emerald-500 text-white border-emerald-600 shadow-sm hover:scale-105';
+                    
+                    let maintPipHtml = '';
+                    let tooltipSuffix = '';
+                    if (isMaint) {
+                        maintPipHtml = `<span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-emerald-700 shadow-xs" title="Same-Day Workshop Maintenance"></span>`;
+                        tooltipSuffix = ` • ⚠️ Workshop: ${maintInfo}`;
+                    }
+
                     pill.innerHTML = `
+                        ${maintPipHtml}
                         <span class="text-[9px] font-black opacity-80">${dayNum}</span>
                         <span class="text-xs font-black">${dTrips}t</span>
-                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg whitespace-nowrap z-50">
-                            ${d}: ${dTrips} Trip(s)
+                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg whitespace-nowrap z-50 pointer-events-none">
+                            ${d}: ${dTrips} Trip(s)${tooltipSuffix}
                         </div>
                     `;
                 } else if (isMaint) {
                     ribbonMaintDays++;
-                    const job = maintDateMap[stdPlate][d].job || 'Garage';
                     pill.className += ' bg-rose-500 text-white border-rose-600 shadow-sm hover:scale-105';
                     pill.innerHTML = `
                         <span class="text-[9px] font-black opacity-80">${dayNum}</span>
                         <span class="text-[10px] font-black uppercase">Maint</span>
-                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg whitespace-nowrap z-50">
-                            ${d}: Maintenance (${job})
+                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg whitespace-nowrap z-50 pointer-events-none">
+                            ${d}: Workshop Maintenance (${maintInfo})
                         </div>
                     `;
                 } else {
@@ -3895,7 +3905,7 @@ Click any bar to filter table`;
                     pill.innerHTML = `
                         <span class="text-[9px] font-bold text-amber-700">${dayNum}</span>
                         <span class="text-[10px] font-bold text-amber-800">Idle</span>
-                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg whitespace-nowrap z-50">
+                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg whitespace-nowrap z-50 pointer-events-none">
                             ${d}: Road-Ready Idle (0 Trips)
                         </div>
                     `;
