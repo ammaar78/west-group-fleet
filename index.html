@@ -1399,31 +1399,31 @@
                 </div>
 
                 <!-- 2 CHARTS ROW (SUPERVISOR BAR + KPI PIE CHART) -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-3.5">
                     <!-- Left: Supervisor Comparison Horizontal Bar Chart -->
-                    <div class="lg:col-span-2 bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col h-[280px]">
-                        <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-100">
+                    <div class="lg:col-span-2 bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-col">
+                        <div class="flex justify-between items-center mb-1.5 pb-1.5 border-b border-slate-100">
                             <div>
                                 <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider">Supervisor Monthly Operations & Volume Breakdown</h4>
                                 <p class="text-[10px] text-slate-500 font-medium">Comparative operational status allocation per supervisor</p>
                             </div>
                             <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Dedicated Fleet</span>
                         </div>
-                        <div class="flex-1 min-h-0 relative">
+                        <div class="relative w-full" style="height: 200px;">
                             <canvas id="chartScorecardSupervisor"></canvas>
                         </div>
                     </div>
 
                     <!-- Right: Pie Chart for Fleet KPI Pass Rate -->
-                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col h-[280px]">
-                        <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-100">
+                    <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-col">
+                        <div class="flex justify-between items-center mb-1.5 pb-1.5 border-b border-slate-100">
                             <div>
                                 <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider">Fleet KPI Pass Rate</h4>
                                 <p class="text-[10px] text-slate-500 font-medium">Achieved (≥100%) vs Below Target</p>
                             </div>
                             <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200" id="scPiePassRateBadge">0% Pass</span>
                         </div>
-                        <div class="flex-1 min-h-0 relative flex items-center justify-center">
+                        <div class="relative w-full flex items-center justify-center" style="height: 200px;">
                             <canvas id="chartScorecardKpiPie"></canvas>
                         </div>
                     </div>
