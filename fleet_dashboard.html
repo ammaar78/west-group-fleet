@@ -1361,8 +1361,8 @@
                         <span class="text-[9px] font-black uppercase text-slate-400 tracking-wider block">FLEET KPI ACHIEVEMENT %</span>
                         <span class="text-2xl font-black text-indigo-700 block mt-0.5" id="scFleetKpiAchv">0.0%</span>
                         <div class="mt-2 text-[10px] font-semibold text-slate-600 border-t border-slate-100 pt-1.5 flex justify-between" id="scFleetKpiAchvSub">
-                            <span>Tableau Formula</span>
-                            <span class="font-bold text-emerald-700">Target: 100%</span>
+                            <span>Target: 100%</span>
+                            <span class="font-bold text-emerald-700">Benchmark</span>
                         </div>
                     </div>
 
@@ -4879,7 +4879,7 @@ Click any bar to filter table`;
                 const diff = meanAchvPct - 100;
                 const sign = diff >= 0 ? '+' : '';
                 const diffClass = diff >= 0 ? 'text-emerald-700' : 'text-rose-700';
-                elKpiAchvSub.innerHTML = `<span>Tableau Formula</span> <span class="font-bold ${diffClass}">${sign}${diff.toFixed(1)}% vs Target</span>`;
+                elKpiAchvSub.innerHTML = `<span>Target: 100%</span> <span class="font-bold ${diffClass}">${sign}${diff.toFixed(1)}% vs Target</span>`;
             }
 
             const elTrucksPassed = document.getElementById('scTrucksPassed');
