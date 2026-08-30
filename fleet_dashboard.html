@@ -2304,7 +2304,7 @@
             renderTable();
         }
 
-                function exportFilteredData() {
+                        function exportFilteredData() {
             const selMonth = (monthSelect && monthSelect.value && monthSelect.value !== '') ? monthSelect.value : (availableMonths[0] || 'August 2026');
             const selDate = document.getElementById('dateFilter') ? document.getElementById('dateFilter').value : 'LATEST_7_DAYS';
             
@@ -2359,21 +2359,6 @@
                 filtered = filtered.filter(d => targetPlates.has(d.StdPlate));
             }
 
-            const headers = [
-                'Door Number',
-                'Plate Number',
-                'Trailer Number',
-                'Driver Name',
-                'Supervisor Team',
-                'Assigned Location',
-                'Latest Trip Date',
-                'Trips Count',
-                'Driver KPI %',
-                'KPI Status',
-                'Maintenance Status',
-                'Daily Operational Status'
-            ];
-
             const excelRows = filtered.map(d => {
                 const kpiPct = d.AchievementPct !== undefined ? Number(d.AchievementPct.toFixed(1)) : 0;
                 const kpiStatus = d.AchievedKpi === true ? 'Achieved (>=100%)' : (d.AchievedKpi === false ? 'Below Target (<100%)' : 'No Target');
@@ -2397,10 +2382,8 @@
             const cleanDate = selDate.replace(/[^A-Za-z0-9_-]/g, '_');
             const fileName = `West_Group_Fleet_Register_${cleanMonth}_${cleanDate}.xlsx`;
 
-            // If SheetJS is available, export true .xlsx binary workbook
             if (typeof XLSX !== 'undefined') {
                 const ws = XLSX.utils.json_to_sheet(excelRows);
-                // Set column widths
                 ws['!cols'] = [
                     { wch: 14 }, { wch: 14 }, { wch: 15 }, { wch: 24 },
                     { wch: 22 }, { wch: 18 }, { wch: 16 }, { wch: 12 },
@@ -2410,12 +2393,12 @@
                 XLSX.utils.book_append_sheet(wb, ws, 'Fleet Master Register');
                 XLSX.writeFile(wb, fileName);
             } else {
-                // Fallback to XML Spreadsheet format
-                const csvHeaders = headers.join(',');
-                const csvData = filtered.map(d => {
+                const headers = ['Door Number','Plate Number','Trailer Number','Driver Name','Supervisor Team','Assigned Location','Latest Trip Date','Trips Count','Driver KPI %','KPI Status','Maintenance Status','Daily Operational Status'];
+                const csvLines = [headers.join(',')];
+                filtered.forEach(d => {
                     const kpiPct = d.AchievementPct !== undefined ? d.AchievementPct.toFixed(1) + '%' : 'N/A';
                     const kpiStatus = d.AchievedKpi === true ? 'Achieved (>=100%)' : (d.AchievedKpi === false ? 'Below Target (<100%)' : 'No Target');
-                    return [
+                    csvLines.push([
                         '"' + (d.DoorNo || '') + '"',
                         '"' + (d.StdPlate || '') + '"',
                         '"' + (d.TrailerNumber || '-') + '"',
@@ -2428,13 +2411,11 @@
                         '"' + kpiStatus + '"',
                         '"' + (d.MaintenanceStatus || 'No Active Order') + '"',
                         '"' + (d.DailyActivityStatus || '-') + '"'
-                    ].join(',');
-                }).join('
+                    ].join(','));
+                });
+                const csvContent = '﻿' + csvLines.join('
 ');
-
-                const content = '﻿' + csvHeaders + '
-' + csvData;
-                const blob = new Blob([content], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+                const blob = new Blob([csvContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -2444,55 +2425,6 @@
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
             }
-        }
-
-const headers = [
-                'Door Number',
-                'Plate Number',
-                'Trailer Number',
-                'Driver Name',
-                'Supervisor Team',
-                'Assigned Location',
-                'Latest Trip Date',
-                'Trips Count',
-                'Driver KPI %',
-                'KPI Status',
-                'Maintenance Status',
-                'Daily Operational Status'
-            ];
-
-            const rows = filtered.map(d => {
-                const kpiPct = d.AchievementPct !== undefined ? d.AchievementPct + '%' : 'N/A';
-                const kpiStatus = d.AchievedKpi === true ? 'Achieved (>=100%)' : (d.AchievedKpi === false ? 'Below Target (<100%)' : 'No Target');
-                
-                return [
-                    '"' + (d.DoorNo || '') + '"',
-                    '"' + (d.StdPlate || '') + '"',
-                    '"' + (d.TrailerNumber || '-') + '"',
-                    '"' + (d.DriverName || 'Unassigned') + '"',
-                    '"' + (d.Supervisor || 'Unassigned') + '"',
-                    '"' + (d.AssignedLocation || '-') + '"',
-                    '"' + (d.LatestTripDate || '-') + '"',
-                    d.TotalTripsCount || 0,
-                    '"' + kpiPct + '"',
-                    '"' + kpiStatus + '"',
-                    '"' + (d.MaintenanceStatus || 'No Active Order') + '"',
-                    '"' + (d.DailyActivityStatus || '-') + '"'
-                ].join(',');
-            });
-
-            const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            
-            let cleanDateStr = selDate.replace(/[^a-zA-Z0-9_-]/g, '_');
-            let cleanMonthStr = selMonth.replace(/[^a-zA-Z0-9_-]/g, '_');
-            link.setAttribute('href', url);
-            link.setAttribute('download', `West_Group_Fleet_Report_${cleanMonthStr}_${cleanDateStr}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
         }
 
         const sups = [...new Set(rawData.map(d => d.Supervisor))].sort();
