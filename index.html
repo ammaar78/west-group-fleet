@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="chart.min.js"></script>
     <script>if (typeof Chart === 'undefined') { document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"><\/script>'); }</script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -346,10 +347,10 @@
                     <span>Keys</span>
                 </button>
 
-                <!-- Export CSV -->
-                <button onclick="exportFilteredData(); showToast('Export started — check your downloads', 'success');" class="bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg transition shadow-sm flex items-center gap-1 cursor-pointer shrink-0" title="Export Master Register CSV">
+                <!-- Export Excel -->
+                <button onclick="exportFilteredData(); showToast('Exporting to Excel…', 'success');" class="bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg transition shadow-sm flex items-center gap-1 cursor-pointer shrink-0" title="Export Master Register to Excel (.xlsx)">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <span>CSV</span>
+                    <span>Excel</span>
                 </button>
 
                 <!-- Print Report -->
@@ -1120,9 +1121,9 @@
                     </div>
 
                     <!-- Export Button -->
-                    <button id="btnExportCsvTable" onclick="exportFilteredData(); showToast('Export started — check your downloads', 'success');" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer shrink-0">
+                    <button id="btnExportExcelTable" onclick="exportFilteredData(); showToast('Exporting to Excel…', 'success');" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer shrink-0" title="Export Filtered Table to Excel (.xlsx)">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        <span>Export View</span>
+                        <span>Export Excel</span>
                     </button>
                 </div>
             </div>
@@ -2303,12 +2304,12 @@
             renderTable();
         }
 
-        function exportFilteredData() {
-            const selMonth = (monthSelect && monthSelect.value && monthSelect.value !== '') ? monthSelect.value : (availableMonths[0] || '');
+                function exportFilteredData() {
+            const selMonth = (monthSelect && monthSelect.value && monthSelect.value !== '') ? monthSelect.value : (availableMonths[0] || 'August 2026');
             const selDate = document.getElementById('dateFilter') ? document.getElementById('dateFilter').value : 'LATEST_7_DAYS';
             
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const selectedVal = document.getElementById('filterSup').value;
+            const query = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '';
+            const selectedVal = document.getElementById('filterSup') ? document.getElementById('filterSup').value : 'ALL';
             const selectedStatus = document.getElementById('filterStatus') ? document.getElementById('filterStatus').value : 'ALL';
 
             let filtered = currentProcessedData.filter(d => {
@@ -2359,6 +2360,93 @@
             }
 
             const headers = [
+                'Door Number',
+                'Plate Number',
+                'Trailer Number',
+                'Driver Name',
+                'Supervisor Team',
+                'Assigned Location',
+                'Latest Trip Date',
+                'Trips Count',
+                'Driver KPI %',
+                'KPI Status',
+                'Maintenance Status',
+                'Daily Operational Status'
+            ];
+
+            const excelRows = filtered.map(d => {
+                const kpiPct = d.AchievementPct !== undefined ? Number(d.AchievementPct.toFixed(1)) : 0;
+                const kpiStatus = d.AchievedKpi === true ? 'Achieved (>=100%)' : (d.AchievedKpi === false ? 'Below Target (<100%)' : 'No Target');
+                return {
+                    'Door Number': d.DoorNo || '',
+                    'Plate Number': d.StdPlate || '',
+                    'Trailer Number': d.TrailerNumber || d.TrailerNo || '-',
+                    'Driver Name': d.DriverName || 'Unassigned',
+                    'Supervisor Team': d.Supervisor || 'Unassigned',
+                    'Assigned Location': d.AssignedLocation || '-',
+                    'Latest Trip Date': d.LatestTripDate || '-',
+                    'Trips Count': d.TotalTripsCount || 0,
+                    'Driver KPI %': kpiPct + '%',
+                    'KPI Status': kpiStatus,
+                    'Maintenance Status': d.MaintenanceStatus || 'No Active Order',
+                    'Daily Operational Status': d.DailyActivityStatus || '-'
+                };
+            });
+
+            const cleanMonth = selMonth.replace(/\s+/g, '_');
+            const cleanDate = selDate.replace(/[^A-Za-z0-9_-]/g, '_');
+            const fileName = `West_Group_Fleet_Register_${cleanMonth}_${cleanDate}.xlsx`;
+
+            // If SheetJS is available, export true .xlsx binary workbook
+            if (typeof XLSX !== 'undefined') {
+                const ws = XLSX.utils.json_to_sheet(excelRows);
+                // Set column widths
+                ws['!cols'] = [
+                    { wch: 14 }, { wch: 14 }, { wch: 15 }, { wch: 24 },
+                    { wch: 22 }, { wch: 18 }, { wch: 16 }, { wch: 12 },
+                    { wch: 14 }, { wch: 22 }, { wch: 24 }, { wch: 24 }
+                ];
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Fleet Master Register');
+                XLSX.writeFile(wb, fileName);
+            } else {
+                // Fallback to XML Spreadsheet format
+                const csvHeaders = headers.join(',');
+                const csvData = filtered.map(d => {
+                    const kpiPct = d.AchievementPct !== undefined ? d.AchievementPct.toFixed(1) + '%' : 'N/A';
+                    const kpiStatus = d.AchievedKpi === true ? 'Achieved (>=100%)' : (d.AchievedKpi === false ? 'Below Target (<100%)' : 'No Target');
+                    return [
+                        '"' + (d.DoorNo || '') + '"',
+                        '"' + (d.StdPlate || '') + '"',
+                        '"' + (d.TrailerNumber || '-') + '"',
+                        '"' + (d.DriverName || 'Unassigned') + '"',
+                        '"' + (d.Supervisor || 'Unassigned') + '"',
+                        '"' + (d.AssignedLocation || '-') + '"',
+                        '"' + (d.LatestTripDate || '-') + '"',
+                        d.TotalTripsCount || 0,
+                        '"' + kpiPct + '"',
+                        '"' + kpiStatus + '"',
+                        '"' + (d.MaintenanceStatus || 'No Active Order') + '"',
+                        '"' + (d.DailyActivityStatus || '-') + '"'
+                    ].join(',');
+                }).join('
+');
+
+                const content = '﻿' + csvHeaders + '
+' + csvData;
+                const blob = new Blob([content], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `West_Group_Fleet_Register_${cleanMonth}_${cleanDate}.xls`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        }
+
+const headers = [
                 'Door Number',
                 'Plate Number',
                 'Trailer Number',
@@ -5263,7 +5351,7 @@ Click any bar to filter table`;
             // 1. Check quick system actions
             const quickActions = [
                 { type: 'action', title: 'Open Executive Monthly Performance Scorecard', subtitle: 'View full month company volume, supervisor comparisons & leaderboards', icon: '📊', action: () => { closeSpotlightModal(); openMonthlyScorecardModal(); } },
-                { type: 'action', title: 'Export Master Register CSV', subtitle: 'Download filtered data report', icon: '📥', action: () => { exportFilteredData(); closeSpotlightModal(); showToast('Export started — check downloads', 'success'); } },
+                { type: 'action', title: 'Export Master Register Excel (.xlsx)', subtitle: 'Download filtered data report', icon: '📥', action: () => { exportFilteredData(); closeSpotlightModal(); showToast('Export started — check downloads', 'success'); } },
                 { type: 'action', title: 'Switch to Entire Month Snapshot', subtitle: 'View full month aggregate performance', icon: '📅', action: () => { const df = document.getElementById('dateFilter'); if (df) { df.value = 'ALL_MONTH'; updateDashboardView(); closeSpotlightModal(); showToast('Switched to Entire Month Snapshot', 'info'); } } },
                 { type: 'action', title: 'Switch to Past 7 Days Snapshot', subtitle: 'View latest 7-day activity window', icon: '⚡', action: () => { const df = document.getElementById('dateFilter'); if (df) { df.value = 'LATEST_7_DAYS'; updateDashboardView(); closeSpotlightModal(); showToast('Switched to Past 7 Days Snapshot', 'info'); } } },
                 { type: 'action', title: 'Jump to Chronic Maintenance Watchlist', subtitle: 'View assets with high workshop downtime', icon: '🔧', action: () => { closeSpotlightModal(); const el = document.getElementById('secChronicMaint'); if (el) el.scrollIntoView({ behavior: 'smooth' }); } },
