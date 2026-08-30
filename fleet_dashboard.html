@@ -302,16 +302,34 @@
 
             <!-- Global Controls: Month & Date Filter -->
             <div class="flex flex-wrap items-center gap-3">
-                <div class="bg-slate-900/90 border border-slate-800 rounded-lg px-3 py-1.5 flex items-center gap-2 shadow-sm">
-                    <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">MONTH:</span>
-                    <select id="monthSelect" onchange="onMonthChange()" class="bg-slate-950 border border-slate-700 text-white font-extrabold text-xs px-2.5 py-1 rounded focus:outline-none cursor-pointer">
-                    </select>
+                <!-- Month & Snapshot with Hover Scorecard Trigger -->
+                <div class="relative group">
+                    <div class="bg-slate-900/90 border border-slate-800 hover:border-blue-500/50 rounded-lg px-3 py-1.5 flex items-center gap-2 shadow-sm transition">
+                        <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">MONTH:</span>
+                        <select id="monthSelect" onchange="onMonthChange()" class="bg-slate-950 border border-slate-700 text-white font-extrabold text-xs px-2.5 py-1 rounded focus:outline-none cursor-pointer">
+                        </select>
+                    </div>
+                    <!-- Hover Tooltip Action -->
+                    <div class="absolute top-full left-0 mt-1 hidden group-hover:flex items-center gap-1.5 bg-blue-900/95 text-white text-[10px] font-bold px-2.5 py-1 rounded-md shadow-xl border border-blue-500 whitespace-nowrap z-50 animate-fade-in cursor-pointer" onclick="openMonthlyScorecardModal()">
+                        <span>📊 Open Monthly Executive Scorecard ↗</span>
+                    </div>
                 </div>
-                <div class="bg-slate-900/90 border border-slate-800 rounded-lg px-3 py-1.5 flex items-center gap-2 shadow-sm">
-                    <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">SNAPSHOT DATE:</span>
-                    <select id="dateFilter" onchange="updateDashboardView()" class="bg-slate-950 border border-blue-500/80 text-white font-extrabold text-xs px-2.5 py-1 rounded focus:outline-none cursor-pointer">
-                    </select>
+
+                <div class="relative group">
+                    <div class="bg-slate-900/90 border border-slate-800 hover:border-blue-500/50 rounded-lg px-3 py-1.5 flex items-center gap-2 shadow-sm transition">
+                        <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">SNAPSHOT DATE:</span>
+                        <select id="dateFilter" onchange="updateDashboardView()" class="bg-slate-950 border border-blue-500/80 text-white font-extrabold text-xs px-2.5 py-1 rounded focus:outline-none cursor-pointer">
+                        </select>
+                    </div>
                 </div>
+
+                <!-- Executive Monthly Scorecard Header Button -->
+                <button onclick="openMonthlyScorecardModal()" class="bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 hover:from-blue-600 hover:to-indigo-600 border border-blue-400/60 text-white text-xs font-bold px-3.5 py-2 rounded-lg transition shadow-md flex items-center gap-2 cursor-pointer group" title="Executive Monthly Performance Scorecard (Ctrl+M)">
+                    <span class="text-amber-300 group-hover:scale-110 transition-transform">📊</span>
+                    <span>Monthly Scorecard</span>
+                    <kbd class="px-1.5 py-0.5 rounded bg-blue-950/80 text-blue-200 font-mono text-[9px] border border-blue-600">Ctrl M</kbd>
+                </button>
+
                 <button onclick="openSpotlightModal()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-slate-500 text-slate-200 text-xs font-bold px-3 py-2 rounded-lg transition shadow-sm flex items-center gap-2 cursor-pointer" title="Global Spotlight Search (Ctrl+K)">
                     <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     <span>Quick Find</span>
@@ -343,6 +361,13 @@
                 <div class="px-2 py-1.5 mb-1 nav-heading">
                     <span class="text-[9px] font-black uppercase tracking-widest text-slate-500">OPERATIONAL VIEWS</span>
                 </div>
+
+                <!-- 0. Executive Monthly Scorecard Pop-up -->
+                <a href="#" onclick="openMonthlyScorecardModal(); return false;" class="nav-item bg-blue-950/40 border border-blue-800/60 text-blue-300 hover:bg-blue-900/60 hover:text-white" title="Executive Monthly Scorecard Briefing">
+                    <svg class="w-4 h-4 flex-shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    <span class="nav-label truncate font-bold text-white">Monthly Scorecard</span>
+                    <span class="text-[9px] bg-blue-500/30 text-blue-200 px-1 py-0.2 rounded font-mono ml-auto">Pop-up</span>
+                </a>
 
                 <!-- 1. Overview -->
                 <a href="#secOverview" onclick="setActiveNav(this, 'secOverview'); return false;" class="nav-item" title="Executive Overview">
@@ -1250,6 +1275,215 @@
     </div>
 
     <!-- INDIVIDUAL TRUCK DIGITAL PASSPORT & 30-DAY ACTIVITY MODAL -->
+        <!-- ========================================================================= -->
+    <!-- EXECUTIVE MONTHLY PERFORMANCE SCORECARD MODAL -->
+    <!-- ========================================================================= -->
+    <div id="monthlyScorecardModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-5 animate-fade-in">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-300 max-w-6xl w-full max-h-[94vh] flex flex-col overflow-hidden">
+            
+            <!-- Modal Header -->
+            <div class="p-4 px-6 text-white flex flex-wrap justify-between items-center gap-3 border-b border-slate-800" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-black uppercase tracking-wider text-amber-400 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-600/40 font-mono">Executive Briefing</span>
+                        <span class="text-[10px] font-bold text-slate-300 bg-slate-800 px-2 py-0.5 rounded border border-slate-700 font-mono" id="scorecardMonthBadge">Full Month: August 2026</span>
+                    </div>
+                    <h2 class="text-base sm:text-lg font-black text-white mt-1 flex items-center gap-2 tracking-tight">
+                        <span>📊 Executive Monthly Performance Scorecard</span>
+                    </h2>
+                    <p class="text-xs text-slate-300 font-medium hidden sm:block">Company-wide monthly logistics volume (Dedicated + 3rd Party), KPI achievement, supervisor benchmarking, and asset leaderboards</p>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <!-- Supervisor Slicer inside Modal -->
+                    <div class="bg-slate-900/90 border border-slate-700 rounded-lg px-3 py-1.5 flex items-center gap-2 shadow-inner">
+                        <span class="text-[11px] font-extrabold text-amber-400 uppercase tracking-wider">SUPERVISOR:</span>
+                        <select id="scorecardSupervisorSlicer" onchange="onScorecardSupervisorChange()" class="bg-slate-950 text-white font-bold text-xs px-2.5 py-1 rounded border border-slate-600 focus:outline-none cursor-pointer">
+                            <option value="ALL">All Supervisors (Total Fleet)</option>
+                            <option value="Karim Awad / Jubail">Karim Awad / Jubail</option>
+                            <option value="Alaa Askool / Jeddah">Alaa Askool / Jeddah</option>
+                            <option value="Karimullah / Yanbu">Karimullah / Yanbu</option>
+                        </select>
+                    </div>
+                    
+                    <button onclick="closeMonthlyScorecardModal()" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg font-bold text-xs transition border border-slate-700 cursor-pointer" title="Close (Esc)">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body (Scrollable) -->
+            <div class="p-4 sm:p-5 overflow-y-auto space-y-4 bg-slate-50 flex-1">
+                
+                <!-- 8 EXECUTIVE KPI TILES -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <!-- 1. Total Dispatched Trips (Dedicated + 3rd Party) -->
+                    <div class="p-3.5 bg-white border border-slate-200 rounded-xl shadow-xs border-l-4 border-blue-600">
+                        <span class="text-[9px] font-black uppercase text-slate-400 tracking-wider block">TOTAL DISPATCHED TRIPS</span>
+                        <span class="text-2xl font-black text-slate-900 block mt-0.5" id="scTotalTrips">0</span>
+                        <div class="mt-2 text-[10px] font-semibold text-slate-600 flex justify-between border-t border-slate-100 pt-1.5" id="scTotalTripsSub">
+                            <span class="text-emerald-700 font-bold">0 WG</span>
+                            <span class="text-amber-700 font-bold">0 3rd Party</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. Daily Average Dispatch -->
+                    <div class="p-3.5 bg-white border border-slate-200 rounded-xl shadow-xs border-l-4 border-emerald-600">
+                        <span class="text-[9px] font-black uppercase text-slate-400 tracking-wider block">DAILY AVERAGE DISPATCH</span>
+                        <span class="text-2xl font-black text-emerald-700 block mt-0.5" id="scDailyAvg">0</span>
+                        <div class="mt-2 text-[10px] font-semibold text-slate-500 border-t border-slate-100 pt-1.5 flex justify-between" id="scDailyAvgSub">
+                            <span>0 Active Days</span>
+                            <span class="font-bold text-emerald-800">Peak: 0/day</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. Fleet Size & Utilization -->
+                    <div class="p-3.5 bg-white border border-slate-200 rounded-xl shadow-xs border-l-4 border-slate-800">
+                        <span class="text-[9px] font-black uppercase text-slate-400 tracking-wider block">REGISTERED FLEET ASSETS</span>
+                        <span class="text-2xl font-black text-slate-900 block mt-0.5" id="scFleetSize">0</span>
+                        <div class="mt-2 text-[10px] font-semibold text-slate-600 border-t border-slate-100 pt-1.5 flex justify-between" id="scFleetSizeSub">
+                            <span>0 Active in Month</span>
+                            <span class="font-bold text-emerald-700">0% Utilization</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Fleet Mean KPI Achievement -->
+                    <div class="p-3.5 bg-white border border-slate-200 rounded-xl shadow-xs border-l-4 border-indigo-600">
+                        <span class="text-[9px] font-black uppercase text-slate-400 tracking-wider block">FLEET KPI ACHIEVEMENT %</span>
+                        <span class="text-2xl font-black text-indigo-700 block mt-0.5" id="scFleetKpiAchv">0.0%</span>
+                        <div class="mt-2 text-[10px] font-semibold text-slate-600 border-t border-slate-100 pt-1.5 flex justify-between" id="scFleetKpiAchvSub">
+                            <span>Tableau Formula</span>
+                            <span class="font-bold text-emerald-700">Target: 100%</span>
+                        </div>
+                    </div>
+
+                    <!-- 5. Trucks Passed KPI -->
+                    <div class="p-3.5 bg-white border border-slate-200 rounded-xl shadow-xs border-l-4 border-teal-600">
+                        <span class="text-[9px] font-black uppercase text-slate-400 tracking-wider block">TRUCKS PASSED KPI (≥100%)</span>
+                        <span class="text-2xl font-black text-teal-700 block mt-0.5" id="scTrucksPassed">0</span>
+                        <div class="mt-2 text-[10px] font-semibold text-slate-600 border-t border-slate-100 pt-1.5 flex justify-between" id="scTrucksPassedSub">
+                            <span>0% Pass Rate</span>
+                            <span class="text-rose-700 font-bold">0 Below Target</span>
+                        </div>
+                    </div>
+
+                    <!-- 6. Total Earned Days -->
+                    <div class="p-3.5 bg-white border border-slate-200 rounded-xl shadow-xs border-l-4 border-purple-600">
+                        <span class="text-[9px] font-black uppercase text-slate-400 tracking-wider block">ROUTE EARNED DAYS</span>
+                        <span class="text-2xl font-black text-purple-700 block mt-0.5" id="scEarnedDays">0</span>
+                        <div class="mt-2 text-[10px] font-semibold text-slate-600 border-t border-slate-100 pt-1.5 flex justify-between" id="scEarnedDaysSub">
+                            <span>Sum PerTrip Weights</span>
+                            <span class="font-bold text-purple-800">0.0 / Truck</span>
+                        </div>
+                    </div>
+
+                    <!-- 7. Maintenance Dwell Days -->
+                    <div class="p-3.5 bg-white border border-slate-200 rounded-xl shadow-xs border-l-4 border-rose-600">
+                        <span class="text-[9px] font-black uppercase text-slate-400 tracking-wider block">MAINTENANCE DOWNTIME</span>
+                        <span class="text-2xl font-black text-rose-700 block mt-0.5" id="scMaintDays">0 <span class="text-xs font-normal text-slate-500">Days</span></span>
+                        <div class="mt-2 text-[10px] font-semibold text-slate-600 border-t border-slate-100 pt-1.5 flex justify-between" id="scMaintDaysSub">
+                            <span>0 Dwell Assets</span>
+                            <span class="font-bold text-rose-700">0% Downtime</span>
+                        </div>
+                    </div>
+
+                    <!-- 8. Workshop Recurrence -->
+                    <div class="p-3.5 bg-white border border-slate-200 rounded-xl shadow-xs border-l-4 border-orange-600">
+                        <span class="text-[9px] font-black uppercase text-slate-400 tracking-wider block">REPEAT WORKSHOP RATE</span>
+                        <span class="text-2xl font-black text-orange-700 block mt-0.5" id="scWorkshopRecurrence">0.0%</span>
+                        <div class="mt-2 text-[10px] font-semibold text-slate-600 border-t border-slate-100 pt-1.5 flex justify-between" id="scWorkshopRecurrenceSub">
+                            <span>2+ Garage Entries</span>
+                            <span class="font-bold text-orange-800">Watchlist</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2 CHARTS ROW (SUPERVISOR BAR + KPI PIE CHART) -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <!-- Left: Supervisor Comparison Horizontal Bar Chart -->
+                    <div class="lg:col-span-2 bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col h-[280px]">
+                        <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-100">
+                            <div>
+                                <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider">Supervisor Monthly Operations & Volume Breakdown</h4>
+                                <p class="text-[10px] text-slate-500 font-medium">Comparative operational status allocation per supervisor</p>
+                            </div>
+                            <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Dedicated Fleet</span>
+                        </div>
+                        <div class="flex-1 min-h-0 relative">
+                            <canvas id="chartScorecardSupervisor"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Right: Pie Chart for Fleet KPI Pass Rate -->
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col h-[280px]">
+                        <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-100">
+                            <div>
+                                <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider">Fleet KPI Pass Rate</h4>
+                                <p class="text-[10px] text-slate-500 font-medium">Achieved (≥100%) vs Below Target</p>
+                            </div>
+                            <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200" id="scPiePassRateBadge">0% Pass</span>
+                        </div>
+                        <div class="flex-1 min-h-0 relative flex items-center justify-center">
+                            <canvas id="chartScorecardKpiPie"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TOP 5 & BOTTOM 5 LEADERBOARD TABLES -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <!-- Top 5 Performers -->
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col">
+                        <div class="flex justify-between items-center mb-2 pb-1.5 border-b border-slate-100">
+                            <h4 class="text-xs font-black text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
+                                <span>🏆</span> Top 5 Performers (Highest KPI %)
+                            </h4>
+                            <span class="text-[10px] text-slate-400 font-medium">Click row to open Passport</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 text-[10px] text-slate-500 font-bold uppercase">
+                                    <tr>
+                                        <th class="p-1.5">Plate / Door</th>
+                                        <th class="p-1.5">Driver</th>
+                                        <th class="p-1.5">Supervisor</th>
+                                        <th class="p-1.5 text-center">Trips</th>
+                                        <th class="p-1.5 text-right">KPI %</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="scorecardTop5Body" class="divide-y divide-slate-100 font-medium"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Bottom 5 Performers -->
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col">
+                        <div class="flex justify-between items-center mb-2 pb-1.5 border-b border-slate-100">
+                            <h4 class="text-xs font-black text-rose-800 uppercase tracking-wider flex items-center gap-1.5">
+                                <span>⚠️</span> Bottom 5 Performers (Lowest KPI %)
+                            </h4>
+                            <span class="text-[10px] text-slate-400 font-medium">Click row to open Passport</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 text-[10px] text-slate-500 font-bold uppercase">
+                                    <tr>
+                                        <th class="p-1.5">Plate / Door</th>
+                                        <th class="p-1.5">Driver</th>
+                                        <th class="p-1.5">Supervisor</th>
+                                        <th class="p-1.5 text-center">Trips</th>
+                                        <th class="p-1.5 text-right">KPI %</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="scorecardBottom5Body" class="divide-y divide-slate-100 font-medium"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <div id="truckPassportModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/80 backdrop-blur-md hidden transition-all duration-300" onclick="if(event.target === this) closeTruckPassport();">
         <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <!-- Header -->
@@ -4474,6 +4708,363 @@ Click any bar to filter table`;
         // ==============================================================================
         // KEYBOARD SHORTCUTS & CHEATSHEET MODAL
         // ==============================================================================
+        
+        // =========================================================================
+        // EXECUTIVE MONTHLY PERFORMANCE SCORECARD CONTROLLER
+        // =========================================================================
+        let chartScorecardSupInstance = null;
+        let chartScorecardPieInstance = null;
+
+        function openMonthlyScorecardModal() {
+            const modal = document.getElementById('monthlyScorecardModal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            renderMonthlyScorecard();
+        }
+
+        function closeMonthlyScorecardModal() {
+            const modal = document.getElementById('monthlyScorecardModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function onScorecardSupervisorChange() {
+            renderMonthlyScorecard();
+        }
+
+        function renderMonthlyScorecard() {
+            const selMonth = (monthSelect && monthSelect.value && monthSelect.value !== '') ? monthSelect.value : (availableMonths[0] || 'August 2026');
+            const selSup = document.getElementById('scorecardSupervisorSlicer') ? document.getElementById('scorecardSupervisorSlicer').value : 'ALL';
+            
+            const rawDates = monthDatesMap[selMonth] || [];
+            const daysInMonth = Math.max(1, rawDates.length);
+            
+            // Header badge
+            const elMonthBadge = document.getElementById('scorecardMonthBadge');
+            if (elMonthBadge) elMonthBadge.innerText = `Full Month: ${selMonth}`;
+
+            // Filter rawData by supervisor slicer
+            const fleetPool = (selSup === 'ALL') ? rawData.slice() : rawData.filter(t => t.Supervisor === selSup);
+            const fleetSize = fleetPool.length;
+
+            // 1. Compute 3rd party vs West Fleet trips across the entire month from dailyAllDispatchMap
+            let grandTotalDispatchedTrips = 0;
+            let totalWestTripsInMonth = 0;
+            let totalThirdPartyTripsInMonth = 0;
+            let peakDayTrips = 0;
+
+            rawDates.forEach(dStr => {
+                const disp = (typeof dailyAllDispatchMap !== 'undefined' && dailyAllDispatchMap && dailyAllDispatchMap[dStr]) ? dailyAllDispatchMap[dStr] : null;
+                if (disp) {
+                    grandTotalDispatchedTrips += (disp.total || 0);
+                    totalWestTripsInMonth += (disp.west || 0);
+                    totalThirdPartyTripsInMonth += (disp.third_party || 0);
+                    if ((disp.total || 0) > peakDayTrips) peakDayTrips = disp.total;
+                }
+            });
+
+            // If a specific supervisor is selected, calculate dedicated trips for that supervisor
+            let selectedPoolTrips = 0;
+            let activeTrucksInMonth = 0;
+            let totalPerTripSum = 0;
+            let totalMaintDaysSum = 0;
+            let sumAchvPct = 0;
+            let passedKpiCount = 0;
+            let dwell2PlusCount = 0;
+
+            const truckPerformanceList = [];
+
+            fleetPool.forEach(t => {
+                const sp = t.StdPlate;
+                let tTrips = 0;
+                let tPerTrip = 0;
+                let tMaintDays = 0;
+
+                rawDates.forEach(dStr => {
+                    if (dailyTripsMap[sp] && dailyTripsMap[sp][dStr]) {
+                        const cnt = dailyTripsMap[sp][dStr];
+                        tTrips += cnt;
+                    }
+                    if (dailyPerTripMap[sp] && dailyPerTripMap[sp][dStr]) {
+                        tPerTrip += dailyPerTripMap[sp][dStr];
+                    }
+                    if (maintDateMap && maintDateMap[sp] && maintDateMap[sp][dStr]) {
+                        tMaintDays++;
+                    }
+                });
+
+                if (tTrips > 0) activeTrucksInMonth++;
+                selectedPoolTrips += tTrips;
+                totalPerTripSum += tPerTrip;
+                totalMaintDaysSum += tMaintDays;
+                if (tMaintDays >= 2) dwell2PlusCount++;
+
+                const tWorkingDays = Math.max(0.1, daysInMonth - tMaintDays);
+                const tAchvPct = (tPerTrip / tWorkingDays) * 100;
+                if (tAchvPct >= 100.0) passedKpiCount++;
+                sumAchvPct += tAchvPct;
+
+                truckPerformanceList.push({
+                    StdPlate: sp,
+                    TruckPlate: t.TruckPlate,
+                    DoorNo: t.DoorNo || '',
+                    DriverName: t.DriverName || 'Unassigned',
+                    Supervisor: t.Supervisor,
+                    Trips: tTrips,
+                    PerTrip: tPerTrip,
+                    MaintDays: tMaintDays,
+                    AchvPct: tAchvPct
+                });
+            });
+
+            // Summary calculations
+            const meanAchvPct = fleetSize > 0 ? (sumAchvPct / fleetSize) : 0;
+            const passRatePct = fleetSize > 0 ? ((passedKpiCount / fleetSize) * 100) : 0;
+            const belowKpiCount = Math.max(0, fleetSize - passedKpiCount);
+            const belowRatePct = Math.max(0, 100 - passRatePct);
+            const activeUtilPct = fleetSize > 0 ? ((activeTrucksInMonth / fleetSize) * 100) : 0;
+            const avgDailyRunRate = daysInMonth > 0 ? ((selSup === 'ALL' ? grandTotalDispatchedTrips : selectedPoolTrips) / daysInMonth) : 0;
+            const recurrenceRatePct = fleetSize > 0 ? ((dwell2PlusCount / fleetSize) * 100) : 0;
+            const totalPossibleDays = fleetSize * daysInMonth;
+            const downtimeRatePct = totalPossibleDays > 0 ? ((totalMaintDaysSum / totalPossibleDays) * 100) : 0;
+
+            // 1. Update 8 KPI Tiles
+            const elTotalTrips = document.getElementById('scTotalTrips');
+            const elTotalTripsSub = document.getElementById('scTotalTripsSub');
+            if (elTotalTrips) {
+                if (selSup === 'ALL') {
+                    elTotalTrips.innerText = grandTotalDispatchedTrips.toLocaleString();
+                    if (elTotalTripsSub) {
+                        const wgShare = grandTotalDispatchedTrips > 0 ? ((totalWestTripsInMonth / grandTotalDispatchedTrips) * 100).toFixed(0) : 0;
+                        const tpShare = grandTotalDispatchedTrips > 0 ? ((totalThirdPartyTripsInMonth / grandTotalDispatchedTrips) * 100).toFixed(0) : 0;
+                        elTotalTripsSub.innerHTML = `<span class="text-emerald-700 font-bold">${totalWestTripsInMonth.toLocaleString()} WG (${wgShare}%)</span> <span class="text-amber-700 font-bold">${totalThirdPartyTripsInMonth.toLocaleString()} 3rd (${tpShare}%)</span>`;
+                    }
+                } else {
+                    elTotalTrips.innerText = selectedPoolTrips.toLocaleString();
+                    if (elTotalTripsSub) {
+                        elTotalTripsSub.innerHTML = `<span class="text-emerald-700 font-bold">${selectedPoolTrips.toLocaleString()} Dedicated Trips</span> <span class="text-slate-500 font-bold">${selSup.split(' / ')[0]}</span>`;
+                    }
+                }
+            }
+
+            const elDailyAvg = document.getElementById('scDailyAvg');
+            const elDailyAvgSub = document.getElementById('scDailyAvgSub');
+            if (elDailyAvg) elDailyAvg.innerText = avgDailyRunRate.toFixed(1);
+            if (elDailyAvgSub) elDailyAvgSub.innerHTML = `<span>${daysInMonth} Active Days</span> <span class="font-bold text-emerald-800">Peak: ${peakDayTrips.toLocaleString()}/day</span>`;
+
+            const elFleetSize = document.getElementById('scFleetSize');
+            const elFleetSizeSub = document.getElementById('scFleetSizeSub');
+            if (elFleetSize) elFleetSize.innerText = fleetSize;
+            if (elFleetSizeSub) elFleetSizeSub.innerHTML = `<span>${activeTrucksInMonth} Active in Month</span> <span class="font-bold text-emerald-700">${activeUtilPct.toFixed(1)}% Utilization</span>`;
+
+            const elKpiAchv = document.getElementById('scFleetKpiAchv');
+            const elKpiAchvSub = document.getElementById('scFleetKpiAchvSub');
+            if (elKpiAchv) elKpiAchv.innerText = `${meanAchvPct.toFixed(1)}%`;
+            if (elKpiAchvSub) {
+                const diff = meanAchvPct - 100;
+                const sign = diff >= 0 ? '+' : '';
+                const diffClass = diff >= 0 ? 'text-emerald-700' : 'text-rose-700';
+                elKpiAchvSub.innerHTML = `<span>Tableau Formula</span> <span class="font-bold ${diffClass}">${sign}${diff.toFixed(1)}% vs Target</span>`;
+            }
+
+            const elTrucksPassed = document.getElementById('scTrucksPassed');
+            const elTrucksPassedSub = document.getElementById('scTrucksPassedSub');
+            if (elTrucksPassed) elTrucksPassed.innerText = passedKpiCount;
+            if (elTrucksPassedSub) elTrucksPassedSub.innerHTML = `<span>${passRatePct.toFixed(1)}% Pass Rate</span> <span class="text-rose-700 font-bold">${belowKpiCount} Below Target</span>`;
+
+            const elEarnedDays = document.getElementById('scEarnedDays');
+            const elEarnedDaysSub = document.getElementById('scEarnedDaysSub');
+            if (elEarnedDays) elEarnedDays.innerText = totalPerTripSum.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+            if (elEarnedDaysSub) {
+                const avgPerTruck = fleetSize > 0 ? (totalPerTripSum / fleetSize).toFixed(1) : '0.0';
+                elEarnedDaysSub.innerHTML = `<span>Sum PerTrip Weights</span> <span class="font-bold text-purple-800">${avgPerTruck} / Truck</span>`;
+            }
+
+            const elMaintDays = document.getElementById('scMaintDays');
+            const elMaintDaysSub = document.getElementById('scMaintDaysSub');
+            if (elMaintDays) elMaintDays.innerHTML = `${totalMaintDaysSum} <span class="text-xs font-normal text-slate-500">Days</span>`;
+            if (elMaintDaysSub) elMaintDaysSub.innerHTML = `<span>${dwell2PlusCount} Dwell Assets</span> <span class="font-bold text-rose-700">${downtimeRatePct.toFixed(1)}% Downtime</span>`;
+
+            const elWorkshopRec = document.getElementById('scWorkshopRecurrence');
+            const elWorkshopRecSub = document.getElementById('scWorkshopRecurrenceSub');
+            if (elWorkshopRec) elWorkshopRec.innerText = `${recurrenceRatePct.toFixed(1)}%`;
+            if (elWorkshopRecSub) elWorkshopRecSub.innerHTML = `<span>2+ Garage Entries</span> <span class="font-bold text-orange-800">${dwell2PlusCount} on Watchlist</span>`;
+
+            // 2. Render Fleet KPI Pass Rate Pie Chart
+            const pieBadge = document.getElementById('scPiePassRateBadge');
+            if (pieBadge) pieBadge.innerText = `${passRatePct.toFixed(1)}% Pass`;
+
+            const ctxPie = document.getElementById('chartScorecardKpiPie');
+            if (ctxPie) {
+                if (chartScorecardPieInstance) chartScorecardPieInstance.destroy();
+                chartScorecardPieInstance = new Chart(ctxPie, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Achieved KPI (≥100%)', 'Below KPI (<100%)'],
+                        datasets: [{
+                            data: [passedKpiCount, belowKpiCount],
+                            backgroundColor: ['#10b981', '#f43f5e'],
+                            borderColor: ['#059669', '#e11d48'],
+                            borderWidth: 2,
+                            hoverOffset: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    font: { size: 11, weight: 'bold', family: 'Plus Jakarta Sans' },
+                                    padding: 14,
+                                    usePointStyle: true,
+                                    pointStyle: 'circle'
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: '#0f172a',
+                                titleFont: { size: 12, weight: 'bold' },
+                                bodyFont: { size: 11, weight: 'bold' },
+                                padding: 10,
+                                cornerRadius: 8,
+                                callbacks: {
+                                    label: (context) => {
+                                        const val = context.parsed || 0;
+                                        const pct = fleetSize > 0 ? ((val / fleetSize) * 100).toFixed(1) : 0;
+                                        return ` ${context.label}: ${val} trucks (${pct}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 3. Render Supervisor Horizontal Stacked Bar Chart
+            const ctxSup = document.getElementById('chartScorecardSupervisor');
+            if (ctxSup) {
+                if (chartScorecardSupInstance) chartScorecardSupInstance.destroy();
+
+                const supervisors = ['Karim Awad / Jubail', 'Alaa Askool / Jeddah', 'Karimullah / Yanbu'].filter(s => rawData.some(t => t.Supervisor === s));
+                
+                const supActive = [];
+                const supDelay = [];
+                const supMaint = [];
+                const supOos = [];
+                const supLabels = [];
+
+                supervisors.forEach(s => {
+                    const sGroup = rawData.filter(t => t.Supervisor === s);
+                    const sTotal = Math.max(1, sGroup.length);
+
+                    let act = 0, dly = 0, mnt = 0, oos = 0;
+                    let sTrips = 0;
+
+                    sGroup.forEach(t => {
+                        const sp = t.StdPlate;
+                        let tTr = 0;
+                        rawDates.forEach(dStr => {
+                            if (dailyTripsMap[sp] && dailyTripsMap[sp][dStr]) tTr += dailyTripsMap[sp][dStr];
+                        });
+                        sTrips += tTr;
+
+                        if (String(t.DailyActivityStatus).includes('Active') || tTr > 0) act++;
+                        else if (String(t.DailyActivityStatus).includes('Maintenance') || String(t.MaintenanceStatus).includes('Maintenance')) mnt++;
+                        else if (String(t.DailyActivityStatus).includes('Out of Service') || String(t.OfficialStatus).toLowerCase().includes('accident')) oos++;
+                        else dly++;
+                    });
+
+                    supActive.push(act);
+                    supDelay.push(dly);
+                    supMaint.push(mnt);
+                    supOos.push(oos);
+                    supLabels.push(`${s.split(' / ')[0]} (${sGroup.length} Trucks | ${sTrips.toLocaleString()} Trips)`);
+                });
+
+                chartScorecardSupInstance = new Chart(ctxSup, {
+                    type: 'bar',
+                    data: {
+                        labels: supLabels,
+                        datasets: [
+                            { label: 'Operating Active', data: supActive, backgroundColor: '#10b981', borderRadius: 4 },
+                            { label: 'Road-Ready Idle', data: supDelay, backgroundColor: '#f59e0b', borderRadius: 4 },
+                            { label: 'In Maintenance', data: supMaint, backgroundColor: '#f97316', borderRadius: 4 },
+                            { label: 'Out of Service', data: supOos, backgroundColor: '#ef4444', borderRadius: 4 }
+                        ]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { stacked: true, grid: { display: true, color: 'rgba(226, 232, 240, 0.6)' } },
+                            y: { stacked: true, grid: { display: false }, ticks: { font: { size: 10, weight: 'bold', family: 'Plus Jakarta Sans' } } }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                align: 'end',
+                                labels: { font: { size: 10, weight: 'bold' }, padding: 8, usePointStyle: true, pointStyle: 'circle' }
+                            },
+                            tooltip: {
+                                backgroundColor: '#0f172a',
+                                padding: 10,
+                                cornerRadius: 8
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 4. Render Top 5 & Bottom 5 Performers
+            truckPerformanceList.sort((a, b) => b.AchvPct - a.AchvPct);
+
+            const top5 = truckPerformanceList.slice(0, 5);
+            const bottom5 = truckPerformanceList.slice().filter(t => t.AchvPct < 100).sort((a, b) => a.AchvPct - b.AchvPct).slice(0, 5);
+
+            const top5Body = document.getElementById('scorecardTop5Body');
+            if (top5Body) {
+                top5Body.innerHTML = '';
+                top5.forEach(t => {
+                    const pDoor = formatPlateDoorDisplay(t.StdPlate, t.DoorNo);
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-emerald-50/60 transition cursor-pointer text-xs';
+                    tr.onclick = () => { closeMonthlyScorecardModal(); openTruckPassport(t.StdPlate); };
+                    tr.innerHTML = `
+                        <td class="p-1.5 font-bold text-slate-900">${pDoor}</td>
+                        <td class="p-1.5 text-slate-700 font-medium">${t.DriverName}</td>
+                        <td class="p-1.5 text-slate-500 font-medium">${t.Supervisor.split(' / ')[0]}</td>
+                        <td class="p-1.5 text-center font-bold text-slate-900">${t.Trips}</td>
+                        <td class="p-1.5 text-right font-black text-emerald-700">${t.AchvPct.toFixed(1)}%</td>
+                    `;
+                    top5Body.appendChild(tr);
+                });
+            }
+
+            const bottom5Body = document.getElementById('scorecardBottom5Body');
+            if (bottom5Body) {
+                bottom5Body.innerHTML = '';
+                bottom5.forEach(t => {
+                    const pDoor = formatPlateDoorDisplay(t.StdPlate, t.DoorNo);
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-rose-50/60 transition cursor-pointer text-xs';
+                    tr.onclick = () => { closeMonthlyScorecardModal(); openTruckPassport(t.StdPlate); };
+                    tr.innerHTML = `
+                        <td class="p-1.5 font-bold text-slate-900">${pDoor}</td>
+                        <td class="p-1.5 text-slate-700 font-medium">${t.DriverName}</td>
+                        <td class="p-1.5 text-slate-500 font-medium">${t.Supervisor.split(' / ')[0]}</td>
+                        <td class="p-1.5 text-center font-bold text-slate-900">${t.Trips}</td>
+                        <td class="p-1.5 text-right font-black text-rose-700">${t.AchvPct.toFixed(1)}%</td>
+                    `;
+                    bottom5Body.appendChild(tr);
+                });
+            }
+        }
+
         function toggleShortcutsModal() {
             const m = document.getElementById('shortcutsModal');
             if (!m) return;
@@ -4509,7 +5100,20 @@ Click any bar to filter table`;
             const spotlightModal = document.getElementById('spotlightModal');
             const isSpotlightOpen = spotlightModal && !spotlightModal.classList.contains('hidden');
 
+            // Ctrl+M: Toggle Executive Monthly Scorecard Modal
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'm' || e.key === 'M')) {
+                e.preventDefault();
+                const scModal = document.getElementById('monthlyScorecardModal');
+                if (scModal && !scModal.classList.contains('hidden')) {
+                    closeMonthlyScorecardModal();
+                } else {
+                    openMonthlyScorecardModal();
+                }
+                return;
+            }
+
             if (e.key === 'Escape') {
+                closeMonthlyScorecardModal();
                 if (isSpotlightOpen) {
                     e.preventDefault();
                     closeSpotlightModal();
@@ -4645,6 +5249,7 @@ Click any bar to filter table`;
 
             // 1. Check quick system actions
             const quickActions = [
+                { type: 'action', title: 'Open Executive Monthly Performance Scorecard', subtitle: 'View full month company volume, supervisor comparisons & leaderboards', icon: '📊', action: () => { closeSpotlightModal(); openMonthlyScorecardModal(); } },
                 { type: 'action', title: 'Export Master Register CSV', subtitle: 'Download filtered data report', icon: '📥', action: () => { exportFilteredData(); closeSpotlightModal(); showToast('Export started — check downloads', 'success'); } },
                 { type: 'action', title: 'Switch to Entire Month Snapshot', subtitle: 'View full month aggregate performance', icon: '📅', action: () => { const df = document.getElementById('dateFilter'); if (df) { df.value = 'ALL_MONTH'; updateDashboardView(); closeSpotlightModal(); showToast('Switched to Entire Month Snapshot', 'info'); } } },
                 { type: 'action', title: 'Switch to Past 7 Days Snapshot', subtitle: 'View latest 7-day activity window', icon: '⚡', action: () => { const df = document.getElementById('dateFilter'); if (df) { df.value = 'LATEST_7_DAYS'; updateDashboardView(); closeSpotlightModal(); showToast('Switched to Past 7 Days Snapshot', 'info'); } } },
