@@ -4720,7 +4720,10 @@ Click any bar to filter table`;
             if (!modal) return;
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            renderMonthlyScorecard();
+            // Allow DOM paint for Chart.js canvas dimensions
+            setTimeout(() => {
+                renderMonthlyScorecard();
+            }, 50);
         }
 
         function closeMonthlyScorecardModal() {
