@@ -4856,7 +4856,6 @@ Click any bar to filter table`;
             const meanAchvPct = fleetSize > 0 ? (sumAchvPct / fleetSize) : 0;
             const passRatePct = fleetSize > 0 ? ((passedKpiCount / fleetSize) * 100) : 0;
             const belowKpiCount = Math.max(0, fleetSize - passedKpiCount);
-            const belowRatePct = Math.max(0, 100 - passRatePct);
             const activeUtilPct = fleetSize > 0 ? ((activeTrucksInMonth / fleetSize) * 100) : 0;
             const avgDailyRunRate = daysInMonth > 0 ? ((selSup === 'ALL' ? grandTotalDispatchedTrips : selectedPoolTrips) / daysInMonth) : 0;
             const recurrenceRatePct = fleetSize > 0 ? ((dwell2PlusCount / fleetSize) * 100) : 0;
