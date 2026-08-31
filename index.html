@@ -274,20 +274,33 @@
             }
         }
 
-        /* DYNAMIC THEME SYSTEM (Default = Current Corporate Look) */
-        [data-theme="dark"] body, [data-theme="dark"] main {
+        
+        /* ==========================================================================
+           DYNAMIC THEME SYSTEM (Default = Current Corporate Look)
+           ========================================================================== */
+        
+        /* 🌌 Midnight Dark Command Skin */
+        [data-theme="dark"] main {
             background-color: #070b14 !important;
-            color: #cbd5e1 !important;
+            background-image:
+                radial-gradient(circle at 1px 1px, rgba(51,65,85,0.25) 1px, transparent 0),
+                linear-gradient(180deg, #0b101d 0%, #070b14 260px) !important;
         }
-        [data-theme="dark"] .bg-white,
-        [data-theme="dark"] .bg-slate-50:not(button):not(input):not(select):not(.badge) {
+        [data-theme="dark"] .corp-card,
+        [data-theme="dark"] .bg-white {
             background-color: #0f172a !important;
             border-color: #1e293b !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
             color: #f8fafc !important;
+        }
+        [data-theme="dark"] .corp-card:hover {
+            border-color: #334155 !important;
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.7) !important;
         }
         [data-theme="dark"] .text-slate-900,
         [data-theme="dark"] .text-slate-800,
-        [data-theme="dark"] .text-slate-700 {
+        [data-theme="dark"] .text-slate-700,
+        [data-theme="dark"] [id^="kpi"] {
             color: #f8fafc !important;
         }
         [data-theme="dark"] .text-slate-600,
@@ -302,29 +315,45 @@
             background-color: #1e293b !important;
             color: #f1f5f9 !important;
         }
+        [data-theme="dark"] .bg-slate-50:not(button):not(input):not(select):not(.badge) {
+            background-color: #0f172a !important;
+        }
         [data-theme="dark"] thead.bg-slate-100\/90,
         [data-theme="dark"] thead {
             background-color: #0b1220 !important;
             color: #94a3b8 !important;
         }
-        [data-theme="dark"] tr:hover {
+        [data-theme="dark"] tbody tr {
+            border-color: #1e293b !important;
+        }
+        [data-theme="dark"] tbody tr:hover {
             background-color: rgba(30, 41, 59, 0.7) !important;
         }
-
-        /* Titanium Theme */
-        [data-theme="titanium"] body, [data-theme="titanium"] main {
-            background-color: #121826 !important;
-            color: #d1d9e6 !important;
+        [data-theme="dark"] tbody td {
+            color: #e2e8f0 !important;
         }
-        [data-theme="titanium"] .bg-white,
-        [data-theme="titanium"] .bg-slate-50:not(button):not(input):not(select):not(.badge) {
+
+        /* 🛸 Executive Titanium Slate Skin */
+        [data-theme="titanium"] main {
+            background-color: #121826 !important;
+            background-image:
+                radial-gradient(circle at 1px 1px, rgba(70,90,120,0.25) 1px, transparent 0),
+                linear-gradient(180deg, #182234 0%, #121826 260px) !important;
+        }
+        [data-theme="titanium"] .corp-card,
+        [data-theme="titanium"] .bg-white {
             background-color: #1a2436 !important;
             border-color: #2b3952 !important;
+            box-shadow: 0 10px 20px -3px rgba(5, 10, 20, 0.4) !important;
             color: #ffffff !important;
+        }
+        [data-theme="titanium"] .corp-card:hover {
+            border-color: #3b4d6e !important;
         }
         [data-theme="titanium"] .text-slate-900,
         [data-theme="titanium"] .text-slate-800,
-        [data-theme="titanium"] .text-slate-700 {
+        [data-theme="titanium"] .text-slate-700,
+        [data-theme="titanium"] [id^="kpi"] {
             color: #ffffff !important;
         }
         [data-theme="titanium"] .text-slate-600,
@@ -339,19 +368,28 @@
             background-color: #243147 !important;
             color: #f1f5f9 !important;
         }
+        [data-theme="titanium"] .bg-slate-50:not(button):not(input):not(select):not(.badge) {
+            background-color: #1a2436 !important;
+        }
         [data-theme="titanium"] thead.bg-slate-100\/90,
         [data-theme="titanium"] thead {
             background-color: #151d2c !important;
             color: #a0b2cf !important;
         }
-        [data-theme="titanium"] tr:hover {
+        [data-theme="titanium"] tbody tr {
+            border-color: #2b3952 !important;
+        }
+        [data-theme="titanium"] tbody tr:hover {
             background-color: rgba(38, 53, 82, 0.7) !important;
+        }
+        [data-theme="titanium"] tbody td {
+            color: #d1d9e6 !important;
         }
 
     </style>
 
 </head>
-<body class="text-slate-800 antialiased h-screen overflow-hidden flex flex-col" style="background-color: #f1f5f9;">
+<body class="text-slate-800 antialiased h-screen overflow-hidden flex flex-col">
 
     <!-- HEADER / NAVIGATION BANNER -->
     <header class="border-b border-slate-800 px-4 sm:px-6 py-2.5 flex-shrink-0 z-40 shadow-md" style="background: linear-gradient(180deg, #0f172a 0%, #0b1220 100%);">
@@ -539,7 +577,7 @@
         </aside>
 
         <!-- MAIN BODY CONTENT -->
-        <main class="flex-1 w-full max-w-7xl mx-auto p-6 md:p-7 space-y-7 overflow-y-auto overflow-x-hidden" style="background-color: #f1f5f9;">
+        <main id="mainContent" class="flex-1 w-full max-w-7xl mx-auto p-6 md:p-7 space-y-7 overflow-y-auto overflow-x-hidden">
 
             <!-- KPI SUMMARY CARDS (5-CARD EXECUTIVE ANALYTICS GRID) -->
             <section id="secOverview" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 scroll-mt-20">
