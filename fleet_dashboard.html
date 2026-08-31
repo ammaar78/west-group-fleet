@@ -3892,7 +3892,7 @@ Click any bar to filter table`;
             trucks: []
         };
 
-        function updateChronicMaintTelemetry() {
+                function updateChronicMaintTelemetry() {
             const selMonth = (monthSelect && monthSelect.value && monthSelect.value !== '') ? monthSelect.value : (availableMonths[0] || '');
             const selDate = document.getElementById('dateFilter') ? document.getElementById('dateFilter').value : 'LATEST_7_DAYS';
             
@@ -3924,10 +3924,37 @@ Click any bar to filter table`;
 
                 const mRecords = (maintDateMap && maintDateMap[sp]) ? maintDateMap[sp] : {};
                 const mInMonth = Object.keys(mRecords).filter(d => targetMaintDates.has(d));
+                if (mInMonth.length === 0) return;
 
-                if (mInMonth.length >= 2) {
-                    const daysCount = mInMonth.length;
-                    totalGarageDays += daysCount;
+                // Group maintenance dates by distinct Job Order / Job No
+                const jobsMap = {};
+                mInMonth.forEach(d => {
+                    const desc = mRecords[d] || 'General Maintenance';
+                    const jobMatch = desc.match(/J\d+/i) || desc.match(/\((.*?)\)/);
+                    const jobId = jobMatch ? jobMatch[0].replace(/[()]/g, '') : 'GENERAL_ORDER';
+                    if (!jobsMap[jobId]) jobsMap[jobId] = [];
+                    jobsMap[jobId].push(d);
+                });
+
+                const distinctJobsCount = Object.keys(jobsMap).length;
+                const jobDwells = Object.values(jobsMap).map(dates => dates.length);
+                const maxSingleJobDwell = jobDwells.length > 0 ? Math.max(...jobDwells) : 0;
+                const totalMonthDwell = mInMonth.length;
+
+                // QUALIFICATION CRITERIA:
+                // 1. Single Heavy Job / Major Overhaul: Max single job dwell >= 4 days
+                // 2. Repeat Visits with Combined Dwell >= 4 days: (JobsCount >= 2 AND TotalMonthDwell >= 4)
+                // 3. Chronic Cumulative Dwell > 8 days
+                // NOISE EXCLUDED: Routine 1-2 day minor maintenance totaling < 4 days is automatically filtered out!
+                const isSingleHeavyJob = (distinctJobsCount === 1 && maxSingleJobDwell >= 4);
+                const isRepeatMajorJob = (distinctJobsCount >= 2 && maxSingleJobDwell >= 4);
+                const isRepeatCombined4 = (distinctJobsCount >= 2 && totalMonthDwell >= 4);
+                const isHighCumulative = (totalMonthDwell > 8);
+
+                const qualifies = (isSingleHeavyJob || isRepeatMajorJob || isRepeatCombined4 || isHighCumulative);
+
+                if (qualifies) {
+                    totalGarageDays += totalMonthDwell;
 
                     // Extract recent job description / category
                     const recentDate = mInMonth.sort().reverse()[0];
@@ -3935,17 +3962,34 @@ Click any bar to filter table`;
                     const jobMatch = recentDesc.match(/J\d+/i) || recentDesc.match(/\((.*?)\)/);
                     const jobLabel = jobMatch ? jobMatch[0].replace(/[()]/g, '') : 'Workshop Order';
 
-                    const risk = (daysCount >= 4) ? 'CRITICAL' : 'HIGH_RISK';
+                    let triggerReason = '';
+                    let badgeClass = '';
+                    if (isSingleHeavyJob) {
+                        triggerReason = `Single Heavy Job (${maxSingleJobDwell}d ≥ 4d)`;
+                        badgeClass = 'bg-rose-100 text-rose-800 border-rose-300';
+                    } else if (isRepeatMajorJob) {
+                        triggerReason = `Repeat + Major Job (${distinctJobsCount} jobs, max ${maxSingleJobDwell}d)`;
+                        badgeClass = 'bg-rose-100 text-rose-800 border-rose-300';
+                    } else if (isRepeatCombined4) {
+                        triggerReason = `Repeat (${distinctJobsCount} jobs, ${totalMonthDwell}d combined ≥ 4d)`;
+                        badgeClass = 'bg-orange-100 text-orange-800 border-orange-300';
+                    } else {
+                        triggerReason = `High Dwell (${totalMonthDwell}d > 8d)`;
+                        badgeClass = 'bg-orange-100 text-orange-800 border-orange-300';
+                    }
 
                     chronicTrucks.push({
                         StdPlate: sp,
                         DoorNo: door,
                         DriverName: drv,
                         Supervisor: sup,
-                        WorkshopDays: daysCount,
+                        JobsCount: distinctJobsCount,
+                        MaxJobDays: maxSingleJobDwell,
+                        WorkshopDays: totalMonthDwell,
                         RecentDesc: recentDesc,
                         JobLabel: jobLabel,
-                        RiskLevel: risk
+                        TriggerReason: triggerReason,
+                        BadgeClass: badgeClass
                     });
                 }
             });
@@ -3953,13 +3997,12 @@ Click any bar to filter table`;
             // Sort by garage days desc
             chronicTrucks.sort((a, b) => b.WorkshopDays - a.WorkshopDays);
 
-            const critCount = chronicTrucks.filter(c => c.RiskLevel === 'CRITICAL').length;
-            const highRiskCount = chronicTrucks.filter(c => c.RiskLevel === 'HIGH_RISK').length;
+            const critCount = chronicTrucks.length;
             const recRate = rawData.length > 0 ? ((chronicTrucks.length / rawData.length) * 100).toFixed(1) + '%' : '0%';
 
             currentChronicMaintData = {
                 criticalCount: critCount,
-                highRiskCount: highRiskCount,
+                highRiskCount: 0,
                 totalDays: totalGarageDays,
                 recurrenceRate: recRate,
                 trucks: chronicTrucks,
@@ -3982,25 +4025,19 @@ Click any bar to filter table`;
             if (tbody) {
                 tbody.innerHTML = '';
                 if (chronicTrucks.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400 font-semibold italic">No repeat workshop dwell assets recorded in this month.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400 font-semibold italic">No critical maintenance watchlist assets recorded in this month.</td></tr>';
                 } else {
                     chronicTrucks.slice(0, 5).forEach(t => {
                         const tr = document.createElement('tr');
                         tr.className = 'hover:bg-slate-50 transition border-b border-slate-100 text-xs';
 
-                        let riskBadge = '';
-                        if (t.RiskLevel === 'CRITICAL') {
-                            riskBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-300">🔴 ${t.WorkshopDays}d Dwell (Critical)</span>`;
-                        } else {
-                            riskBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-800 border border-orange-200">🟠 ${t.WorkshopDays}d Dwell (High Risk)</span>`;
-                        }
-
+                        const riskBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-black border ${t.BadgeClass}">🔴 ${t.WorkshopDays}d Dwell (${t.TriggerReason})</span>`;
                         const pDoor = formatPlateDoorDisplay(t.StdPlate, t.DoorNo);
 
                         tr.innerHTML = `
                             <td class="p-2.5 font-bold">${pDoor}</td>
                             <td class="p-2.5 text-slate-700 font-medium">${t.Supervisor.split(' / ')[0]}</td>
-                            <td class="p-2.5 text-center font-mono text-[11px] font-bold text-slate-800">${t.JobLabel}</td>
+                            <td class="p-2.5 text-center font-mono text-[11px] font-bold text-slate-800">${t.JobLabel} (${t.JobsCount} ${t.JobsCount === 1 ? 'job' : 'jobs'})</td>
                             <td class="p-2.5 text-center">${riskBadge}</td>
                             <td class="p-2.5 text-right">
                                 <button onclick="filterByChronicMaint('${t.StdPlate}')" class="text-[10px] font-bold text-orange-700 bg-orange-50 hover:bg-orange-600 hover:text-white border border-orange-200 px-2 py-0.5 rounded transition cursor-pointer">
@@ -4019,9 +4056,8 @@ Click any bar to filter table`;
             let label = '';
 
             if (target === 'ALL') {
-                const critTrucks = currentChronicMaintData.trucks.filter(t => t.WorkshopDays >= 4);
-                targetPlates = critTrucks.map(t => t.StdPlate);
-                label = 'All ' + targetPlates.length + ' Critical Maintenance Watchlist Assets (4+ Garage Days in ' + (currentChronicMaintData.monthName || 'Month') + ')';
+                targetPlates = currentChronicMaintData.trucks.map(t => t.StdPlate);
+                label = 'All ' + targetPlates.length + ' Maintenance Watchlist Assets (' + (currentChronicMaintData.monthName || 'Month') + ')';
             } else {
                 targetPlates = [target];
                 const found = currentChronicMaintData.trucks.find(t => t.StdPlate === target);
@@ -4029,7 +4065,7 @@ Click any bar to filter table`;
             }
 
             if (targetPlates.length === 0) {
-                alert('No assets with 4+ workshop days found in this period.');
+                alert('No maintenance watchlist assets found in this period.');
                 return;
             }
 
