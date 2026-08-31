@@ -4879,12 +4879,21 @@ Click any bar to filter table`;
                 if (tMaintDays >= 2) dwell2PlusCount++;
 
                 // Enhanced Monthly Scorecard Adjustments (Long Trip Benefit & Trailer Deduplication)
+                let tActiveDays = 0;
+                rawDates.forEach(dStr => {
+                    if (dailyTripsMap[sp] && dailyTripsMap[sp][dStr] > 0) tActiveDays++;
+                });
+
                 const tLongTripBenefit = (monthlyLongTripBenefitMap && monthlyLongTripBenefitMap[selMonth] && monthlyLongTripBenefitMap[selMonth][sp]) ? monthlyLongTripBenefitMap[selMonth][sp] : 0;
                 const tTrailerMaintDays = (monthlyTrailerMaintMap && monthlyTrailerMaintMap[selMonth] && monthlyTrailerMaintMap[selMonth][sp]) ? monthlyTrailerMaintMap[selMonth][sp] : 0;
 
-                // True Working Days = Calendar Days - Truck Maint - Trailer Only Maint - Long Trip Extra Travel Time
-                const tWorkingDays = Math.max(0.5, daysInMonth - tMaintDays - tTrailerMaintDays - tLongTripBenefit);
-                const tAchvPct = (tPerTrip / tWorkingDays) * 100;
+                // Convert non-active road travel days on long trips into credited travel time (capped by idle days)
+                const tIdleDays = Math.max(0, daysInMonth - tMaintDays - tActiveDays);
+                const tEffectiveLongCredit = Math.min(tLongTripBenefit, tIdleDays);
+
+                // True Working Days (cannot be less than actual active road days or 1.0)
+                const tWorkingDays = Math.max(Math.max(1, tActiveDays), daysInMonth - tMaintDays - tTrailerMaintDays - tEffectiveLongCredit);
+                const tAchvPct = (tPerTrip / Math.max(1, tWorkingDays)) * 100;
                 if (tAchvPct >= 100.0) passedKpiCount++;
                 sumAchvPct += tAchvPct;
 
