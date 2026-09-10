@@ -74,6 +74,26 @@
         .truck-heading-arrow {
             transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
+
+        /* Fullscreen Map Styles */
+        .radar-fullscreen-mode {
+            position: fixed !important;
+            inset: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            z-index: 99999 !important;
+            border-radius: 0 !important;
+            border: none !important;
+            margin: 0 !important;
+        }
+        .radar-fullscreen-mode #map {
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 100vh !important;
+            border-radius: 0 !important;
+        }
     </style>
 </head>
 <body class="h-full flex flex-col antialiased overflow-hidden select-none">
@@ -194,7 +214,7 @@
         </div>
 
         <!-- CENTER MAP CANVAS -->
-        <div class="flex-1 relative">
+        <div class="flex-1 relative transition-all duration-300" id="protoMapWrapper">
             <div id="map"></div>
 
             <!-- Geofence Quick Floating Toggles (Top Right of Map) -->
@@ -214,6 +234,11 @@
                 </button>
                 <button onclick="resetMapView()" class="px-2 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700 text-[11px] font-medium hover:bg-slate-700 transition">
                     Center
+                </button>
+                <div class="h-4 w-px bg-slate-700 mx-0.5"></div>
+                <button onclick="togglePrototypeFullscreen()" id="protoBtnFullscreen" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold border border-slate-700 transition flex items-center gap-1 cursor-pointer" title="Toggle Fullscreen View">
+                    <span id="protoFsIcon">⛶</span>
+                    <span id="protoFsText">Fullscreen</span>
                 </button>
             </div>
 
@@ -9204,6 +9229,53 @@
             renderTruckRoster();
             updateHudCounts();
         }
+
+        let isProtoFullscreen = false;
+
+        function togglePrototypeFullscreen() {
+            const wrapper = document.getElementById('protoMapWrapper');
+            if (!wrapper) return;
+
+            isProtoFullscreen = !isProtoFullscreen;
+
+            const fsIcon = document.getElementById('protoFsIcon');
+            const fsText = document.getElementById('protoFsText');
+            const btn = document.getElementById('protoBtnFullscreen');
+
+            if (isProtoFullscreen) {
+                wrapper.classList.add('radar-fullscreen-mode');
+                document.body.style.overflow = 'hidden';
+
+                if (wrapper.requestFullscreen) {
+                    wrapper.requestFullscreen().catch(() => {});
+                }
+
+                if (fsIcon) fsIcon.innerText = '✕';
+                if (fsText) fsText.innerText = 'Exit Fullscreen';
+                if (btn) btn.className = 'px-2 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold border border-rose-500 transition flex items-center gap-1 cursor-pointer shadow-md';
+            } else {
+                wrapper.classList.remove('radar-fullscreen-mode');
+                document.body.style.overflow = '';
+
+                if (document.fullscreenElement && document.exitFullscreen) {
+                    document.exitFullscreen().catch(() => {});
+                }
+
+                if (fsIcon) fsIcon.innerText = '⛶';
+                if (fsText) fsText.innerText = 'Fullscreen';
+                if (btn) btn.className = 'px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold border border-slate-700 transition flex items-center gap-1 cursor-pointer';
+            }
+
+            setTimeout(() => {
+                if (map) map.invalidateSize();
+            }, 250);
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement && isProtoFullscreen) {
+                togglePrototypeFullscreen();
+            }
+        });
 
         // VIRTUAL GEOFENCE TERMINAL POLYGONS
         const geofences = [
