@@ -13,13 +13,13 @@
         .font-mono { font-family: 'JetBrains Mono', monospace; }
         
         /* Map Canvas */
-        #map { width: 100%; height: 100%; z-index: 1; background: #070d19; }
+        #map { width: 100%; height: 100%; z-index: 1; background: #f1f5f9; }
         
         /* Leaflet Dark Customization */
         .leaflet-bar { border: 1px solid rgba(51, 65, 85, 0.8) !important; border-radius: 8px !important; overflow: hidden; }
         .leaflet-bar a { background-color: #1e293b !important; color: #94a3b8 !important; border-bottom: 1px solid rgba(51, 65, 85, 0.8) !important; }
         .leaflet-bar a:hover { background-color: #334155 !important; color: #fff !important; }
-        .leaflet-container { background: #0b1120 !important; }
+        .leaflet-container { background: #f1f5f9 !important; }
         
         /* Radar Beacon Pulsing Animations */
         @keyframes pulse-ring {
@@ -198,15 +198,22 @@
             <div id="map"></div>
 
             <!-- Geofence Quick Floating Toggles (Top Right of Map) -->
-            <div class="absolute top-4 right-4 z-10 glass-panel p-2 rounded-xl flex items-center gap-2 text-xs shadow-xl">
+            <div class="absolute top-4 right-4 z-10 glass-panel p-2 rounded-xl flex items-center gap-1.5 text-xs shadow-xl">
                 <button onclick="refreshLiveRadarFeed()" class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold transition flex items-center gap-1 shadow-sm cursor-pointer active:scale-95" title="Fetch live GPS telemetry as of this exact second">
                     <span class="inline-block proto-map-refresh-icon">🔄</span> Refresh Live
                 </button>
-                <button onclick="toggleGeofences()" id="btnGeofences" class="px-2.5 py-1 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40 text-[11px] font-semibold hover:bg-blue-500/30 transition">
-                    Visible (5 Ports)
+                <div class="h-4 w-px bg-slate-700 mx-0.5"></div>
+                <button onclick="setMapStyle('streets')" id="protoMapBtn_streets" class="px-2 py-1 rounded bg-blue-600 text-white font-bold text-[11px] transition shadow-xs cursor-pointer" title="Standard Google Maps Roads & Cities">
+                    🗺️ Google Maps
                 </button>
-                <button onclick="resetMapView()" class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700 text-[11px] font-medium hover:bg-slate-700 transition">
-                    Center Kingdom
+                <button onclick="setMapStyle('satellite')" id="protoMapBtn_satellite" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-[11px] border border-slate-700 transition cursor-pointer" title="Google Satellite Imagery with Roads">
+                    🛰️ Satellite
+                </button>
+                <button onclick="toggleGeofences()" id="btnGeofences" class="px-2 py-1 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40 text-[11px] font-semibold hover:bg-blue-500/30 transition">
+                    Ports (5)
+                </button>
+                <button onclick="resetMapView()" class="px-2 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700 text-[11px] font-medium hover:bg-slate-700 transition">
+                    Center
                 </button>
             </div>
 
@@ -9133,7 +9140,7 @@
   }
 ];
 
-        // LEAFLET MAP INITIALIZATION (Dark Tactical Basemap)
+        // LEAFLET MAP INITIALIZATION (Google Maps Telematics Basemap)
         let map;
         let markers = {};
         let geofenceLayers = [];
@@ -9141,6 +9148,29 @@
         let isSimulating = false;
         let simInterval = null;
         let currentStatusFilter = 'ALL';
+        let currentTileLayer = null;
+        let mapTileLayers = null;
+
+        function setMapStyle(styleName) {
+            if (!map || !mapTileLayers) return;
+            if (currentTileLayer) {
+                try { map.removeLayer(currentTileLayer); } catch(e) {}
+            }
+            currentTileLayer = mapTileLayers[styleName] || mapTileLayers.streets;
+            currentTileLayer.addTo(map);
+
+            const btnStreets = document.getElementById('protoMapBtn_streets');
+            const btnSat = document.getElementById('protoMapBtn_satellite');
+            if (btnStreets && btnSat) {
+                if (styleName === 'satellite') {
+                    btnSat.className = 'px-2 py-1 rounded bg-blue-600 text-white font-bold text-[11px] transition shadow-xs cursor-pointer';
+                    btnStreets.className = 'px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-[11px] border border-slate-700 transition cursor-pointer';
+                } else {
+                    btnStreets.className = 'px-2 py-1 rounded bg-blue-600 text-white font-bold text-[11px] transition shadow-xs cursor-pointer';
+                    btnSat.className = 'px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-[11px] border border-slate-700 transition cursor-pointer';
+                }
+            }
+        }
 
         function initMap() {
             // Center of Saudi Arabia
@@ -9150,12 +9180,24 @@
                 zoomControl: true
             });
 
-            // CartoDB Dark Matter High-Resolution Vector Tiles
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap',
-                subdomains: 'abcd',
-                maxZoom: 19
-            }).addTo(map);
+            // High-Resolution Google Maps Tile Layers (Streets & Satellite Hybrid)
+            mapTileLayers = {
+                streets: L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                    attribution: '&copy; Google Maps',
+                    maxZoom: 20
+                }),
+                satellite: L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+                    attribution: '&copy; Google Maps Satellite',
+                    maxZoom: 20
+                }),
+                osm: L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors',
+                    maxZoom: 19
+                })
+            };
+
+            // Default: Clean Google Maps Streets (Full Daylight Colors, Roads & Cities)
+            setMapStyle('streets');
 
             renderGeofences();
             renderTrucksOnMap();
