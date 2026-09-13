@@ -154,8 +154,13 @@
                 <span id="protoRefreshIcon" class="inline-block transition-transform duration-500">🔄</span>
                 <span id="protoRefreshText">Refresh Live GPS</span>
             </button>
-            <button onclick="toggleSimulation()" id="btnSim" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-sm">
-                <span id="simIcon">▶️</span> <span id="simText">Simulate Live Movement</span>
+            <!-- Real-Time GPS Satellite Auto-Polling -->
+            <button onclick="toggleProtoAutoPolling()" id="protoBtnAutoPoll" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition flex items-center gap-2 shadow-sm cursor-pointer" title="Continuous Real-Time GPS Tracking. Click to pause/resume auto-polling.">
+                <span class="relative flex h-2 w-2">
+                    <span id="protoAutoPollPing" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
+                    <span id="protoAutoPollDot" class="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                </span>
+                <span id="protoAutoPollText">Auto-Poll: 30s</span>
             </button>
             <button onclick="openApiModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold text-xs transition flex items-center gap-1.5">
                 <span>⚙️</span> API Handshake
@@ -219,6 +224,13 @@
 
             <!-- Geofence Quick Floating Toggles (Top Right of Map) -->
             <div class="absolute top-4 right-4 z-10 glass-panel p-2 rounded-xl flex items-center gap-1.5 text-xs shadow-xl">
+                <div id="protoMapAutoBadge" class="px-2 py-1 rounded-lg bg-slate-800 border border-slate-700 text-emerald-400 font-mono text-[11px] font-bold flex items-center gap-1.5" title="Live Auto-Sync Status">
+                    <span class="relative flex h-2 w-2">
+                        <span id="protoMapAutoPing" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                    </span>
+                    <span id="protoMapAutoText">Auto: 30s</span>
+                </div>
                 <button onclick="refreshLiveRadarFeed()" class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold transition flex items-center gap-1 shadow-sm cursor-pointer active:scale-95" title="Fetch live GPS telemetry as of this exact second">
                     <span class="inline-block proto-map-refresh-icon">🔄</span> Refresh Live
                 </button>
@@ -9170,8 +9182,11 @@
         let markers = {};
         let geofenceLayers = [];
         let activeTruck = null;
-        let isSimulating = false;
-        let simInterval = null;
+        let protoAutoPollInterval = null;
+        let protoAutoPollCountdownInterval = null;
+        let protoAutoPollSeconds = 30;
+        let protoAutoPollCountdown = 30;
+        let protoAutoPollActive = true;
         let currentStatusFilter = 'ALL';
         let currentTileLayer = null;
         let mapTileLayers = null;
@@ -9523,47 +9538,56 @@
             document.getElementById('hudParked').innerText = '114';
         }
 
-        // SIMULATION TICK (Moves in-transit trucks slightly along highway vectors)
-        function toggleSimulation() {
-            isSimulating = !isSimulating;
-            const btn = document.getElementById('btnSim');
-            const icon = document.getElementById('simIcon');
-            const text = document.getElementById('simText');
+        // CONTINUOUS REAL-TIME GPS POLLING (30s interval with 1s countdown)
+        function updateProtoAutoPollUI() {
+            const btn = document.getElementById('protoBtnAutoPoll');
+            const text = document.getElementById('protoAutoPollText');
+            const ping = document.getElementById('protoAutoPollPing');
+            const dot = document.getElementById('protoAutoPollDot');
+            const mapPing = document.getElementById('protoMapAutoPing');
+            const mapText = document.getElementById('protoMapAutoText');
 
-            if (isSimulating) {
-                btn.className = 'px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-sm animate-pulse';
-                icon.innerText = '⏸️';
-                text.innerText = 'Pause Simulation';
-
-                simInterval = setInterval(() => {
-                    fleetData.forEach(t => {
-                        if (t.status === 'MOVING') {
-                            // Advance slightly along heading
-                            const rad = t.angle * (Math.PI / 180);
-                            const step = 0.0035; // ~350m per tick
-                            t.lat += Math.cos(rad) * step;
-                            t.lng += Math.sin(rad) * step;
-                            t.todayKm += 1;
-                            t.speed = Math.floor(70 + Math.random() * 15);
-
-                            // Update Leaflet marker
-                            if (markers[t.doorNo]) {
-                                markers[t.doorNo].setLatLng([t.lat, t.lng]);
-                                markers[t.doorNo].setIcon(createTruckIcon(t));
-                            }
-                        }
-                    });
-
-                    if (activeTruck && activeTruck.status === 'MOVING') {
-                        selectTruck(activeTruck);
-                    }
-                }, 2000);
+            if (protoAutoPollActive) {
+                if (btn) btn.className = 'px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition flex items-center gap-2 shadow-sm cursor-pointer';
+                if (ping) ping.classList.remove('hidden');
+                if (dot) dot.className = 'relative inline-flex rounded-full h-2 w-2 bg-white';
+                if (text) text.innerText = `Auto-Poll: ${protoAutoPollCountdown}s`;
+                if (mapPing) mapPing.classList.remove('hidden');
+                if (mapText) mapText.innerText = `Auto: ${protoAutoPollCountdown}s`;
             } else {
-                clearInterval(simInterval);
-                btn.className = 'px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-sm';
-                icon.innerText = '▶️';
-                text.innerText = 'Simulate Live Movement';
+                if (btn) btn.className = 'px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition flex items-center gap-2 border border-slate-700 cursor-pointer';
+                if (ping) ping.classList.add('hidden');
+                if (dot) dot.className = 'relative inline-flex rounded-full h-2 w-2 bg-slate-500';
+                if (text) text.innerText = 'Auto-Poll: Paused';
+                if (mapPing) mapPing.classList.add('hidden');
+                if (mapText) mapText.innerText = 'Paused';
             }
+        }
+
+        function toggleProtoAutoPolling() {
+            protoAutoPollActive = !protoAutoPollActive;
+            if (protoAutoPollActive) {
+                protoAutoPollCountdown = protoAutoPollSeconds;
+                refreshLiveRadarFeed(false);
+            }
+            updateProtoAutoPollUI();
+        }
+
+        function startProtoAutoPolling() {
+            if (protoAutoPollCountdownInterval) clearInterval(protoAutoPollCountdownInterval);
+            protoAutoPollCountdown = protoAutoPollSeconds;
+            updateProtoAutoPollUI();
+
+            protoAutoPollCountdownInterval = setInterval(() => {
+                if (protoAutoPollActive) {
+                    protoAutoPollCountdown--;
+                    if (protoAutoPollCountdown <= 0) {
+                        protoAutoPollCountdown = protoAutoPollSeconds;
+                        refreshLiveRadarFeed(false);
+                    }
+                    updateProtoAutoPollUI();
+                }
+            }, 1000);
         }
 
         // API MODAL HANDSHAKE TEST
@@ -9596,6 +9620,164 @@
             }, 1200);
         }
 
+        // DIRECT IN-BROWSER DIGITAL CORNER SATELLITE TELEMETRY ENGINE
+        let protoDcAuthToken = null;
+        let protoDcTokenExpiry = 0;
+
+        async function getDigitalCornerToken() {
+            if (protoDcAuthToken && Date.now() < protoDcTokenExpiry) {
+                return protoDcAuthToken;
+            }
+            try {
+                const storedTok = sessionStorage.getItem('wg_dc_tok');
+                const storedExp = parseInt(sessionStorage.getItem('wg_dc_exp') || '0', 10);
+                if (storedTok && Date.now() < storedExp) {
+                    protoDcAuthToken = storedTok;
+                    protoDcTokenExpiry = storedExp;
+                    return protoDcAuthToken;
+                }
+
+                const bodyData = new URLSearchParams({
+                    client_id: 'tb5js',
+                    client_secret: 'xpert-tech-911',
+                    grant_type: 'password',
+                    scope: 'tb5api offline_access',
+                    username: 'westLogistics',
+                    password: 'westlogistics123'
+                });
+
+                const resp = await fetch('https://auth.digitalcorner-ksa.com/connect/token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: bodyData.toString()
+                });
+
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.access_token) {
+                        protoDcAuthToken = data.access_token;
+                        protoDcTokenExpiry = Date.now() + ((data.expires_in || 28800) - 600) * 1000;
+                        try {
+                            sessionStorage.setItem('wg_dc_tok', protoDcAuthToken);
+                            sessionStorage.setItem('wg_dc_exp', protoDcTokenExpiry.toString());
+                        } catch (e) {}
+                        return protoDcAuthToken;
+                    }
+                }
+            } catch (err) {
+                console.warn('[DigitalCorner] Prototype Auth notice:', err);
+            }
+            return null;
+        }
+
+        async function fetchDirectFromDigitalCorner() {
+            const token = await getDigitalCornerToken();
+            if (!token) return null;
+
+            const assetIds = fleetData
+                .map(t => t.assetId)
+                .filter(id => typeof id === 'number' && id > 0);
+
+            // If fleetData doesn't have assetIds pre-filled, fetch asset list or query by company
+            try {
+                let idsToQuery = assetIds;
+                if (!idsToQuery.length) {
+                    const listResp = await fetch('https://tracking.digitalcorner-ksa.com/v2/assets/GetAssetList/2753/-1/-1', {
+                        headers: {
+                            'Authorization': 'Bearer ' + token,
+                            'x-api-key': 'woLVkrRE12K8xjihDbynzYc3Vu7/8DXRQZ3JP/u13dI=',
+                            'Accept': 'application/json'
+                        }
+                    });
+                    if (listResp.ok) {
+                        const assets = await listResp.json();
+                        idsToQuery = assets.map(a => a.id).filter(id => id);
+                    }
+                }
+
+                if (!idsToQuery.length) return null;
+
+                const resp = await fetch('https://tracking.digitalcorner-ksa.com/v2/Tracking/GetAssetsLatestPositions/2753', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'x-api-key': 'woLVkrRE12K8xjihDbynzYc3Vu7/8DXRQZ3JP/u13dI=',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        companyId: 2753,
+                        assetIds: idsToQuery
+                    })
+                });
+
+                if (resp.ok) {
+                    const rawList = await resp.json();
+                    if (Array.isArray(rawList) && rawList.length > 0) {
+                        return rawList;
+                    }
+                }
+            } catch (err) {
+                console.warn('[DigitalCorner] Prototype direct live tracking fetch notice:', err);
+            }
+            return null;
+        }
+
+        function applyDigitalCornerLivePositions(rawList) {
+            let updatedCount = 0;
+            rawList.forEach(it => {
+                const aInfo = it.assetInfo || {};
+                const lLog = it.locationLog || {};
+                const assetId = aInfo.assetId || lLog.assetId;
+                const rawRef = (aInfo.reference || aInfo.name || '').trim();
+
+                if (lLog.latitude === null || lLog.latitude === undefined || lLog.longitude === null || lLog.longitude === undefined) return;
+
+                const truck = fleetData.find(t => (assetId && t.assetId === assetId) || (rawRef && t.rawRef === rawRef));
+                if (!truck) return;
+
+                const speed = parseInt(lLog.speed || 0, 10);
+                const angle = parseInt(lLog.angle || 0, 10);
+                const ign = lLog.ignitionStatus || (speed > 0 ? 'On' : 'Off');
+
+                truck.lat = Number(parseFloat(lLog.latitude).toFixed(5));
+                truck.lng = Number(parseFloat(lLog.longitude).toFixed(5));
+                truck.speed = speed;
+                truck.angle = angle;
+                if (lLog.direction) truck.direction = lLog.direction;
+                truck.ignition = ign;
+
+                if (speed > 5) {
+                    truck.status = 'MOVING';
+                } else if (ign === 'On') {
+                    truck.status = 'IDLE';
+                } else {
+                    truck.status = 'PARKED';
+                }
+
+                if (lLog.batteryVoltage !== undefined && lLog.batteryVoltage !== null) {
+                    truck.battery = parseFloat(lLog.batteryVoltage).toFixed(1) + 'V';
+                }
+                if (lLog.address) truck.address = lLog.address;
+
+                if (Array.isArray(lLog.geofences) && lLog.geofences.length > 0) {
+                    if (typeof lLog.geofences[0] === 'object' && lLog.geofences[0].name) {
+                        truck.geofence = lLog.geofences.map(g => g.name).join(', ');
+                    } else {
+                        truck.geofence = lLog.geofences.join(', ');
+                    }
+                }
+                if (lLog.stopTime) truck.dwell = lLog.stopTime;
+                if (lLog.logDateTime) truck.lastCommunicated = lLog.logDateTime;
+                if (lLog.temperature !== undefined && lLog.temperature !== null && lLog.temperature !== 0) {
+                    truck.reefer = parseFloat(lLog.temperature).toFixed(1) + '°C';
+                }
+
+                updatedCount++;
+            });
+            return updatedCount;
+        }
+
         // REFRESH LIVE SATELLITE FEED (On-Demand & Background)
         async function refreshLiveRadarFeed(isManual = true) {
             const btn = document.getElementById('protoBtnRefresh');
@@ -9610,86 +9792,72 @@
                 if (text) text.innerText = 'Connecting...';
             }
 
-            let data = null;
+            let isDirectSuccess = false;
+            let updatedCount = 0;
 
-            // Tier 1: Try local relative path (if running via web server / GitHub / HTTP)
-            if (window.location.protocol !== 'file:') {
-                try {
-                    const res = await fetch('live_fleet_positions.json?t=' + Date.now(), { cache: 'no-store' });
-                    if (res.ok) {
-                        data = await res.json();
+            // TIER 1: Direct In-Browser Satellite Fetch (Digital Corner CORS API)
+            try {
+                const directRaw = await fetchDirectFromDigitalCorner();
+                if (Array.isArray(directRaw) && directRaw.length > 0) {
+                    updatedCount = applyDigitalCornerLivePositions(directRaw);
+                    if (updatedCount > 0) {
+                        isDirectSuccess = true;
                     }
-                } catch (e) {}
+                }
+            } catch (e) {
+                console.warn('Prototype Direct Satellite fetch fallback:', e);
             }
 
-            // Tier 2: Cloud Satellite Mirror (CORS-enabled HTTPS on GitHub Pages - works on file:// and localhost)
-            if (!data || !Array.isArray(data.positions)) {
-                try {
-                    const resCloud = await fetch('https://ammaar78.github.io/west-group-fleet/live_fleet_positions.json?t=' + Date.now(), { cache: 'no-store' });
-                    if (resCloud.ok) {
-                        data = await resCloud.json();
-                    }
-                } catch (e) {}
+            // TIER 2: Fallback to JSON mirror (if direct API is blocked by browser adblocker or firewall)
+            if (!isDirectSuccess) {
+                let data = null;
+                // Tier 2A: Local path (if running via web server)
+                if (window.location.protocol !== 'file:') {
+                    try {
+                        const res = await fetch('live_fleet_positions.json?t=' + Date.now(), { cache: 'no-store' });
+                        if (res.ok) data = await res.json();
+                    } catch (e) {}
+                }
+
+                // Tier 2B: Cloud Satellite Mirror (GitHub Pages)
+                if (!data || !Array.isArray(data.positions)) {
+                    try {
+                        const resCloud = await fetch('https://ammaar78.github.io/west-group-fleet/live_fleet_positions.json?t=' + Date.now(), { cache: 'no-store' });
+                        if (resCloud.ok) data = await resCloud.json();
+                    } catch (e) {}
+                }
+
+                if (data && Array.isArray(data.positions) && data.positions.length > 0) {
+                    data.positions.forEach(p => {
+                        const existing = fleetData.find(x => x.doorNo === p.doorNo || x.plate === p.plate || (p.assetId && x.assetId === p.assetId));
+                        if (existing) {
+                            Object.assign(existing, p);
+                        } else {
+                            fleetData.push(p);
+                        }
+                    });
+                    updatedCount = data.positions.length;
+                }
             }
 
-            // Tier 3: Local Offline Vectors (when completely offline or isolated from internet)
-            if (!data || !Array.isArray(data.positions)) {
-                fleetData.forEach(t => {
-                    if (t.status === 'MOVING' && typeof t.lat === 'number') {
-                        const rad = (t.angle || 0) * (Math.PI / 180);
-                        const step = 0.0035;
-                        t.lat += Math.cos(rad) * step;
-                        t.lng += Math.sin(rad) * step;
-                        t.todayKm = (t.todayKm || 100) + 1;
-                        t.speed = Math.floor(65 + Math.random() * 20);
-                    }
-                });
-                renderTrucksOnMap();
-                renderTruckRoster();
-                updateHudCounts();
+            // Re-render UI
+            renderTrucksOnMap();
+            renderTruckRoster();
+            updateHudCounts();
 
-                const now = new Date();
-                const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                const syncEl = document.getElementById('protoLastSync');
-                if (syncEl) {
-                    syncEl.innerHTML = '<span class="text-amber-400 font-bold">' + timeStr + '</span> <span class="text-slate-400 font-normal">(Vector Sync)</span>';
-                }
-                if (isManual) {
-                    setTimeout(() => {
-                        if (icon) icon.classList.remove('animate-spin');
-                        mapIcons.forEach(el => el.classList.remove('animate-spin'));
-                        if (text) text.innerText = 'Refresh Live GPS';
-                        if (btn) btn.disabled = false;
-                    }, 400);
-                }
-                return;
+            if (activeTruck) {
+                const updated = fleetData.find(x => x.doorNo === activeTruck.doorNo || x.plate === activeTruck.plate);
+                if (updated) selectTruck(updated);
             }
 
-            // Process fresh satellite positions
-            if (data && Array.isArray(data.positions) && data.positions.length > 0) {
-                data.positions.forEach(p => {
-                    const existing = fleetData.find(x => x.doorNo === p.doorNo || x.plate === p.plate);
-                    if (existing) {
-                        Object.assign(existing, p);
-                    } else {
-                        fleetData.push(p);
-                    }
-                });
-
-                renderTrucksOnMap();
-                renderTruckRoster();
-                updateHudCounts();
-
-                if (activeTruck) {
-                    const updated = fleetData.find(x => x.doorNo === activeTruck.doorNo || x.plate === activeTruck.plate);
-                    if (updated) selectTruck(updated);
-                }
-
-                const now = new Date();
-                const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                const syncEl = document.getElementById('protoLastSync');
-                if (syncEl) {
-                    syncEl.innerHTML = '<span class="text-emerald-400 font-bold">' + timeStr + '</span> <span class="text-slate-400 font-normal">(' + data.positions.length + ' units)</span>';
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const syncEl = document.getElementById('protoLastSync');
+            if (syncEl) {
+                if (isDirectSuccess) {
+                    syncEl.innerHTML = '<span class="text-emerald-400 font-bold">' + timeStr + '</span> <span class="text-emerald-300 font-normal">(Live Satellite API)</span>';
+                } else {
+                    syncEl.innerHTML = '<span class="text-emerald-400 font-bold">' + timeStr + '</span> <span class="text-slate-400 font-normal">(' + (updatedCount || fleetData.length) + ' units)</span>';
                 }
             }
 
@@ -9706,9 +9874,7 @@
         // BOOT ON LOAD
         window.onload = () => {
             initMap();
-            setInterval(() => {
-                refreshLiveRadarFeed(false);
-            }, 30000);
+            startProtoAutoPolling();
         };
     </script>
 </body>
