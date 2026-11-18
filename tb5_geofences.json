@@ -2356,6 +2356,42 @@
     ]
   },
   {
+    "id": 34,
+    "name": "RIYADH - AFIF2",
+    "cleanName": "RIYADH - AFIF2",
+    "category": "DEPOT_WAREHOUSE",
+    "categoryLabel": "Depot / Warehouse",
+    "badgeBg": "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
+    "color": "#06b6d4",
+    "areaKm2": 15.67,
+    "center": [
+      23.907124,
+      42.559837
+    ],
+    "coords": [
+      [
+        23.925174,
+        42.570993
+      ],
+      [
+        23.911108,
+        42.528309
+      ],
+      [
+        23.879405,
+        42.542351
+      ],
+      [
+        23.894758,
+        42.586541
+      ],
+      [
+        23.925174,
+        42.570993
+      ]
+    ]
+  },
+  {
     "id": 10,
     "name": "RIYADH W/HOUSE APC",
     "cleanName": "RIYADH W/HOUSE APC",
