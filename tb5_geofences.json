@@ -6,7 +6,7 @@
     "category": "WG_TERMINAL",
     "categoryLabel": "West Group Terminal",
     "badgeBg": "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
-    "color": "#10b981",
+    "color": "#5bde09",
     "areaKm2": 0.05,
     "center": [
       26.426206,
@@ -46,7 +46,7 @@
     "category": "DEPOT_WAREHOUSE",
     "categoryLabel": "Depot / Warehouse",
     "badgeBg": "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
-    "color": "#06b6d4",
+    "color": "#00ffdf",
     "areaKm2": 0.11,
     "center": [
       26.408438,
@@ -94,7 +94,7 @@
     "category": "DEPOT_WAREHOUSE",
     "categoryLabel": "Depot / Warehouse",
     "badgeBg": "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
-    "color": "#06b6d4",
+    "color": "#FF0000",
     "areaKm2": 0.24,
     "center": [
       21.305744,
@@ -142,7 +142,7 @@
     "category": "DEPOT_WAREHOUSE",
     "categoryLabel": "Depot / Warehouse",
     "badgeBg": "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
-    "color": "#06b6d4",
+    "color": "#FF0000",
     "areaKm2": 0.04,
     "center": [
       21.351358,
@@ -182,7 +182,7 @@
     "category": "SEAPORT",
     "categoryLabel": "Seaport Terminal",
     "badgeBg": "bg-blue-500/20 text-blue-300 border-blue-500/40",
-    "color": "#2563eb",
+    "color": "#00ff92",
     "areaKm2": 0.06,
     "center": [
       21.460131,
@@ -242,7 +242,7 @@
     "category": "SEAPORT",
     "categoryLabel": "Seaport Terminal",
     "badgeBg": "bg-blue-500/20 text-blue-300 border-blue-500/40",
-    "color": "#2563eb",
+    "color": "#00ffee",
     "areaKm2": 0.24,
     "center": [
       21.466912,
@@ -318,7 +318,7 @@
     "category": "DEPOT_WAREHOUSE",
     "categoryLabel": "Depot / Warehouse",
     "badgeBg": "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
-    "color": "#06b6d4",
+    "color": "#FF0000",
     "areaKm2": 0.05,
     "center": [
       21.265286,
@@ -358,7 +358,7 @@
     "category": "DEPOT_WAREHOUSE",
     "categoryLabel": "Depot / Warehouse",
     "badgeBg": "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
-    "color": "#06b6d4",
+    "color": "#FF0000",
     "areaKm2": 0.2,
     "center": [
       21.27692,
@@ -398,7 +398,7 @@
     "category": "SEAPORT",
     "categoryLabel": "Seaport Terminal",
     "badgeBg": "bg-blue-500/20 text-blue-300 border-blue-500/40",
-    "color": "#2563eb",
+    "color": "#FF0000",
     "areaKm2": 0.63,
     "center": [
       21.462433,
@@ -566,7 +566,7 @@
     "category": "DEPOT_WAREHOUSE",
     "categoryLabel": "Depot / Warehouse",
     "badgeBg": "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
-    "color": "#06b6d4",
+    "color": "#FF0000",
     "areaKm2": 0.16,
     "center": [
       21.328926,
@@ -614,7 +614,7 @@
     "category": "WG_TERMINAL",
     "categoryLabel": "West Group Terminal",
     "badgeBg": "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
-    "color": "#10b981",
+    "color": "#44ff00",
     "areaKm2": 0.11,
     "center": [
       21.422972,
@@ -758,7 +758,7 @@
     "category": "WG_TERMINAL",
     "categoryLabel": "West Group Terminal",
     "badgeBg": "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
-    "color": "#10b981",
+    "color": "#FF0000",
     "areaKm2": 0.05,
     "center": [
       21.300573,
@@ -818,7 +818,7 @@
     "category": "SEAPORT",
     "categoryLabel": "Seaport Terminal",
     "badgeBg": "bg-blue-500/20 text-blue-300 border-blue-500/40",
-    "color": "#2563eb",
+    "color": "#0300ff",
     "areaKm2": 7.1,
     "center": [
       21.470307,
@@ -1530,7 +1530,7 @@
     "category": "SEAPORT",
     "categoryLabel": "Seaport Terminal",
     "badgeBg": "bg-blue-500/20 text-blue-300 border-blue-500/40",
-    "color": "#2563eb",
+    "color": "#d81515",
     "areaKm2": 0.03,
     "center": [
       27.022728,
@@ -1566,7 +1566,7 @@
     "category": "INDUSTRIAL",
     "categoryLabel": "Industrial Site",
     "badgeBg": "bg-amber-500/20 text-amber-300 border-amber-500/40",
-    "color": "#f59e0b",
+    "color": "#000cff",
     "areaKm2": 0.3,
     "center": [
       27.068352,
@@ -1610,7 +1610,7 @@
     "category": "INDUSTRIAL",
     "categoryLabel": "Industrial Site",
     "badgeBg": "bg-amber-500/20 text-amber-300 border-amber-500/40",
-    "color": "#f59e0b",
+    "color": "#0200ff",
     "areaKm2": 0.32,
     "center": [
       27.021318,
@@ -1722,7 +1722,7 @@
     "category": "INDUSTRIAL",
     "categoryLabel": "Industrial Site",
     "badgeBg": "bg-amber-500/20 text-amber-300 border-amber-500/40",
-    "color": "#f59e0b",
+    "color": "#00ff27",
     "areaKm2": 0.29,
     "center": [
       27.02232,
@@ -1814,7 +1814,7 @@
     "category": "INDUSTRIAL",
     "categoryLabel": "Industrial Site",
     "badgeBg": "bg-amber-500/20 text-amber-300 border-amber-500/40",
-    "color": "#f59e0b",
+    "color": "#FF0000",
     "areaKm2": 1.18,
     "center": [
       27.020604,
@@ -1962,7 +1962,7 @@
     "category": "WG_TERMINAL",
     "categoryLabel": "West Group Terminal",
     "badgeBg": "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
-    "color": "#10b981",
+    "color": "#36ff00",
     "areaKm2": 0.05,
     "center": [
       26.961432,
@@ -2038,7 +2038,7 @@
     "category": "SEAPORT",
     "categoryLabel": "Seaport Terminal",
     "badgeBg": "bg-blue-500/20 text-blue-300 border-blue-500/40",
-    "color": "#2563eb",
+    "color": "#FF0000",
     "areaKm2": 0.71,
     "center": [
       22.52907,
@@ -2074,7 +2074,7 @@
     "category": "SEAPORT",
     "categoryLabel": "Seaport Terminal",
     "badgeBg": "bg-blue-500/20 text-blue-300 border-blue-500/40",
-    "color": "#2563eb",
+    "color": "#FF0000",
     "areaKm2": 0.18,
     "center": [
       22.527811,
@@ -2134,7 +2134,7 @@
     "category": "SEAPORT",
     "categoryLabel": "Seaport Terminal",
     "badgeBg": "bg-blue-500/20 text-blue-300 border-blue-500/40",
-    "color": "#2563eb",
+    "color": "#FF0000",
     "areaKm2": 5.08,
     "center": [
       22.534228,
@@ -2362,7 +2362,7 @@
     "category": "DEPOT_WAREHOUSE",
     "categoryLabel": "Depot / Warehouse",
     "badgeBg": "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
-    "color": "#06b6d4",
+    "color": "#f803ff",
     "areaKm2": 15.67,
     "center": [
       23.907124,
@@ -2398,7 +2398,7 @@
     "category": "DEPOT_WAREHOUSE",
     "categoryLabel": "Depot / Warehouse",
     "badgeBg": "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
-    "color": "#06b6d4",
+    "color": "#FF0236",
     "areaKm2": 0.01,
     "center": [
       24.60594,
@@ -2450,7 +2450,7 @@
     "category": "DEPOT_WAREHOUSE",
     "categoryLabel": "Depot / Warehouse",
     "badgeBg": "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
-    "color": "#06b6d4",
+    "color": "#5773ff",
     "areaKm2": 0.07,
     "center": [
       22.513031,
@@ -2546,32 +2546,36 @@
     "category": "WG_TERMINAL",
     "categoryLabel": "West Group Terminal",
     "badgeBg": "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
-    "color": "#10b981",
-    "areaKm2": 0.05,
+    "color": "#00ff18",
+    "areaKm2": 0.14,
     "center": [
-      24.049899,
-      38.256465
+      24.05002,
+      38.257232
     ],
     "coords": [
       [
-        24.049692,
-        38.255104
+        24.049146,
+        38.255694
       ],
       [
-        24.04852,
-        38.256626
+        24.047925,
+        38.257238
       ],
       [
-        24.050207,
-        38.258489
+        24.051177,
+        38.260903
       ],
       [
-        24.051386,
-        38.257004
+        24.05308,
+        38.258817
       ],
       [
-        24.049692,
-        38.255104
+        24.049646,
+        38.255046
+      ],
+      [
+        24.049146,
+        38.255694
       ]
     ]
   },
@@ -2582,7 +2586,7 @@
     "category": "INDUSTRIAL",
     "categoryLabel": "Industrial Site",
     "badgeBg": "bg-amber-500/20 text-amber-300 border-amber-500/40",
-    "color": "#f59e0b",
+    "color": "#FF0000",
     "areaKm2": 0.01,
     "center": [
       23.97688,
@@ -2642,7 +2646,7 @@
     "category": "INDUSTRIAL",
     "categoryLabel": "Industrial Site",
     "badgeBg": "bg-amber-500/20 text-amber-300 border-amber-500/40",
-    "color": "#f59e0b",
+    "color": "#78ffee",
     "areaKm2": 0.04,
     "center": [
       23.986861,
@@ -2730,7 +2734,7 @@
     "category": "INDUSTRIAL",
     "categoryLabel": "Industrial Site",
     "badgeBg": "bg-amber-500/20 text-amber-300 border-amber-500/40",
-    "color": "#f59e0b",
+    "color": "#db78ff",
     "areaKm2": 1.43,
     "center": [
       23.985952,
@@ -2766,7 +2770,7 @@
     "category": "DEPOT_WAREHOUSE",
     "categoryLabel": "Depot / Warehouse",
     "badgeBg": "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
-    "color": "#06b6d4",
+    "color": "#002aff",
     "areaKm2": 1.96,
     "center": [
       23.980378,
